@@ -1,14 +1,19 @@
-import type { Handle } from '@sveltejs/kit';
+import { fail, redirect, type Handle } from '@sveltejs/kit';
 import * as auth from '$lib/server/auth.js';
 
 const handleAuth: Handle = async ({ event, resolve }) => {
+
 	const sessionToken = event.cookies.get(auth.sessionCookieName);
+	const openRoutes = ["/", "/auth"]
+
+	if(!openRoutes.includes(event.url.pathname) && !sessionToken) return redirect(302, '/auth');
+	
 	if (!sessionToken) {
 		event.locals.user = null;
 		event.locals.session = null;
 		return resolve(event);
 	}
-
+	
 	const { session, user } = await auth.validateSessionToken(sessionToken);
 	if (session) {
 		auth.setSessionTokenCookie(event, sessionToken, session.expiresAt);
