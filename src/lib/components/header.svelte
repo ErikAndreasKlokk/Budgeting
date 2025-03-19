@@ -7,7 +7,7 @@
 
 </script>
 
-<header class=" h-20 w-full flex items-center justify-between relative mb-10">
+<header class=" h-20 w-full flex items-center justify-between relative mb-12">
     <a href="/" class=" text-3xl font-bold font-serif"><span class=" text-emerald-600 text-5xl">B</span>udgeting</a>
     {#if user}
     <div use:clickOutside={() => openDropdown = false} >
