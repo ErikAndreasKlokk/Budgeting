@@ -2,12 +2,12 @@ import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
 export const user = sqliteTable('user', {
 	id: text('id').primaryKey(),
-	username: text('username').notNull().unique(),
+	username: text('username').notNull(),
 	passwordHash: text('password_hash').notNull(),
 });
 
 export const accountStatements = sqliteTable('accountStatements', {
-	id: text('id').primaryKey(),
+	id: integer("id").primaryKey({ autoIncrement: true }),
 	userId: text('user_id')
 		.notNull()
 		.references(() => user.id),
@@ -18,8 +18,8 @@ export const accountStatements = sqliteTable('accountStatements', {
 	tilKontonummer: text(),
 	fraKonto: text(),
 	fraKontonummer: text(),
-	type: text(),
-	tekst: text(),
+	type: text().notNull(),
+	tekst: text().notNull(),
 	kid: text(),
 	hovedkategori: text(),
 	underkategori: text()
