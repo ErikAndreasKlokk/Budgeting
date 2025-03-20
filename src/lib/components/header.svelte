@@ -8,7 +8,7 @@
 </script>
 
 <header class=" h-20 w-full flex items-center justify-between relative mb-12">
-    <a href="/" class=" text-3xl font-bold font-serif"><span class=" text-emerald-600 text-5xl">B</span>udgeting</a>
+    <a href="/" class=" text-3xl font-bold font-serif italic"><span class=" text-blue-700 text-5xl font-sans not-italic">B</span>udgeting</a>
     {#if user}
     <div use:clickOutside={() => openDropdown = false} >
         <button onclick={() => openDropdown = !openDropdown} class=" cursor-pointer underline text-lg font-semibold" aria-label="dropdown">{user} ↓</button>
@@ -23,6 +23,6 @@
         {/if}
     </div>
     {:else}
-        <a href="/auth">Login or register</a>
+        <a href="/auth" class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 hover:bg-blue-800">Login or register</a>
     {/if}
-</header> 
+</header>

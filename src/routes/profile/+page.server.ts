@@ -6,19 +6,19 @@ import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 
-interface csvFormat {
+interface csvBulderFormat {
     Dato: string,
-    'Inn på konto': string,
-    'Ut fra konto': string,
-    'Til konto': string,
-    'Til kontonummer': string,
-    'Fra konto': string,
-    'Fra kontonummer': string,
-    Type: string,
-    Tekst: string,
-    KID: string,
-    Hovedkategori: string,
-    Underkategori: string
+    'Inn på konto': string | null,
+    'Ut fra konto': string | null,
+    'Til konto': string | null,
+    'Til kontonummer': string | null,
+    'Fra konto': string | null,
+    'Fra kontonummer': string | null,
+    Type: string | null,
+    Tekst: string | null,
+    KID: string | null,
+    Hovedkategori: string | null, 
+    Underkategori: string | null
 }
 
 export const load: PageServerLoad = async (event) => {
@@ -38,9 +38,9 @@ export const load: PageServerLoad = async (event) => {
         ))
 
     const vippsTransactions = accountStatements.filter((statement) => 
-        statement.tekst.includes("Fra:") || 
-        statement.tekst.includes("Til:") || 
-        statement.tekst.includes("Straksbetaling")
+        statement.tekst?.includes("Fra:") || 
+        statement.tekst?.includes("Til:") || 
+        statement.tekst?.includes("Straksbetaling")
     )
 
     return { user: event.locals.user, accountStatements: accountStatements, vippsTransactions: vippsTransactions};
@@ -51,11 +51,11 @@ export const actions: Actions = {
         const formData = await event.request.formData();
         const csv = formData.get('csv');
 
-        if (typeof csv !== "object" || csv === null) {
-            return fail(400, { message: 'Not a file'})
+        if (typeof csv !== "object" || !csv) {
+            return fail(400, { csv, missing: true})
         }
         if (!event.locals.user?.id) {
-            return fail(401, { message: 'Not logged in'})
+            return fail(401, { incorrect: true})
         }
 
         const file = await csv.arrayBuffer();
@@ -66,7 +66,7 @@ export const actions: Actions = {
 
         try {
             parsedCSV.forEach(async (line) => {
-                if (!event.locals.user?.id || !line.Dato || !line.Type || !line.Tekst) return;
+                if (!event.locals.user?.id || !line.Dato) return;
 
                 await db.insert(table.accountStatements).values({ 
                     userId: event.locals.user.id, 
@@ -92,8 +92,8 @@ export const actions: Actions = {
     }
 };
 
-const parseCSV = (stream: Readable): Promise<Array<csvFormat>> => {
+const parseCSV = (stream: Readable): Promise<Array<csvBulderFormat>> => {
     return new Promise((resolve) => {
-        Papa.parse(stream, { header: true, encoding: "utf-8", delimiter: ";", complete: (results) => {resolve(results.data as Array<csvFormat>)}});
+        Papa.parse(stream, { header: true, encoding: "utf-8", delimiter: ";", complete: (results) => {resolve(results.data as Array<csvBulderFormat>)}});
     });
 };

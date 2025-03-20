@@ -18,8 +18,8 @@ export const accountStatements = sqliteTable('accountStatements', {
 	tilKontonummer: text(),
 	fraKonto: text(),
 	fraKontonummer: text(),
-	type: text().notNull(),
-	tekst: text().notNull(),
+	type: text(),
+	tekst: text(),
 	kid: text(),
 	hovedkategori: text(),
 	underkategori: text()
