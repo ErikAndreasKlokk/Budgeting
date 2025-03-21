@@ -21,11 +21,21 @@ interface csvBulderFormat {
     Underkategori: string | null
 }
 
+interface accountStatementFormat {
+    dato: Date,
+    innPaaKonto: string | null,
+    utFraKonto: string | null,
+    type: string | null,
+    tekst: string | null,
+    hovedkategori: string | null,
+    underkategori: string | null
+}
+
 export const load: PageServerLoad = async (event) => {
 
     if (!event.locals.user) return;
 
-    const accountStatements = await db.select({ 
+    const accountStatements = db.select({ 
             dato: table.accountStatements.dato,
             innPaaKonto: table.accountStatements.innPaaKonto,
             utFraKonto: table.accountStatements.utFraKonto,
@@ -37,13 +47,22 @@ export const load: PageServerLoad = async (event) => {
             table.accountStatements.userId, event.locals.user.id, 
         ))
 
-    const vippsTransactions = accountStatements.filter((statement) => 
-        statement.tekst?.includes("Fra:") || 
-        statement.tekst?.includes("Til:") || 
-        statement.tekst?.includes("Straksbetaling")
-    )
+    function createStatistics(accountStatements: Array<accountStatementFormat>) {
+        let moneyIn = 0
+        let moneyOut = 0
 
-    return { user: event.locals.user, accountStatements: accountStatements, vippsTransactions: vippsTransactions};
+        accountStatements.map((statement) => {
+            moneyIn += Number(statement.innPaaKonto?.replace(",", "."))
+            moneyOut += Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
+        }) 
+
+        return { 
+            moneyIn: moneyIn, 
+            moneyOut: moneyOut, 
+        }
+    }
+
+    return { user: event.locals.user, accountStatements: await accountStatements, statistics: createStatistics(await accountStatements)};
 };
 
 export const actions: Actions = {

@@ -12,7 +12,7 @@
 
 <main>
 	<div use:clickOutside={() => uploadModal = false} class=" w-full flex justify-end">
-		<button onclick={() => uploadModal = true} class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 flex gap-2 items-center">
+		<button onclick={() => uploadModal = true} class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 flex gap-2 items-center hover:bg-blue-800">
 			Upload account statement
 			<svg class="w-5 h-5 text-neutral-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
 				<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
@@ -20,7 +20,7 @@
 		</button>
 		{#if uploadModal}
 			<div class=" fixed w-screen h-screen top-0 left-0 flex justify-center items-center">
-				<button onclick={() => uploadModal = false} aria-label="Closes the upload modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-20 top-0 left-0"></button>
+				<button onclick={() => uploadModal = false} aria-label="Closes the upload modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
 				{#if form?.missing}
 					<p>No file or incorrect file type.</p>
 				{/if}
@@ -47,7 +47,7 @@
 		{/if}
 	</div>
 
-	<div class=" flex flex-col mt-20 pb-20 gap-20 items-center">
+	<div class=" flex flex-col mt-20 pb-20 gap-20 items-center z-0">
 		<div class=" flex justify-evenly w-full">
 			<div class=" w-5/12  rounded-4xl h-[600px] bg-neutral-800">
 				
@@ -58,63 +58,67 @@
 			</div>
 		</div>
 
-		<div class=" w-11/12 rounded-4xl bg-neutral-800 overflow-x-auto relative border border-neutral-700	">
-			<table class="w-full text-sm text-left text-neutral-400 rounded-4xl">
-				<thead class="text-xs uppercase bg-neutral-700 text-neutral-200 text-nowrap">
-					<tr>
-						<th scope="col" class="px-6 py-5">
-							Date
-						</th>
-						<th scope="col" class="px-6 py-5">
-							Money in (+)
-						</th>
-						<th scope="col" class="px-6 py-5">
-							Money out (-)
-						</th>
-						<th scope="col" class="px-6 py-5">
-							Type
-						</th>
-						<th scope="col" class="px-6 py-5">
-							Text
-						</th>
-						<th scope="col" class="px-6 py-5">
-							Main category
-						</th>
-						<th scope="col" class="px-6 py-5">
-							Sub category
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#if data.accountStatements}
-						{#each data.accountStatements as statement}
-							<tr class=" border-b bg-neutral-800 border-neutral-700 ">
-								<td class="px-6 py-4 text-nowrap">
-									{statement.dato.toDateString()}
-								</td>
-								<td class="px-6 py-4">
-									{statement.innPaaKonto}
-								</td>
-								<td class="px-6 py-4">
-									{statement.utFraKonto}
-								</td>
-								<td class="px-6 py-4">
-									{statement.type}
-								</td>
-								<td class="px-6 py-4">
-									{statement.tekst}
-								</td>
-								<td class="px-6 py-4">
-									{statement.hovedkategori}
-								</td>
-								<td class="px-6 py-4">
-									{statement.underkategori}
-								</td>
-							</tr>
-						{/each}
-					{/if}
-				</tbody>
-			</table>
-		</div>
+		{#await data.accountStatements}
+			<div class=" w-11/12 rounded-xl bg-neutral-800 border border-neutral-700 h-60"></div>
+		{:then accountStatements} 
+		{#if accountStatements?.length !== 0 && accountStatements}
+			<div class=" w-11/12 rounded-xl bg-neutral-800 overflow-x-auto border border-neutral-700">
+				<table class="w-full text-sm text-left text-neutral-400 rounded-4xl">
+					<thead class="text-xs uppercase bg-neutral-700 text-neutral-200 text-nowrap">
+						<tr>
+							<th scope="col" class="px-6 py-5">
+								Date
+							</th>
+							<th scope="col" class="px-6 py-5">
+								Money in (+)
+							</th>
+							<th scope="col" class="px-6 py-5">
+								Money out (-)
+							</th>
+							<th scope="col" class="px-6 py-5">
+								Type
+							</th>
+							<th scope="col" class="px-6 py-5">
+								Text
+							</th>
+							<th scope="col" class="px-6 py-5">
+								Main category
+							</th>
+							<th scope="col" class="px-6 py-5">
+								Sub category
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+							{#each accountStatements as statement}
+								<tr class=" border-b bg-neutral-800 border-neutral-700 ">
+									<td class="px-6 py-4 text-nowrap">
+										{statement.dato.toDateString()}
+									</td>
+									<td class="px-6 py-4">
+										{statement.innPaaKonto}
+									</td>
+									<td class="px-6 py-4">
+										{statement.utFraKonto}
+									</td>
+									<td class="px-6 py-4">
+										{statement.type}
+									</td>
+									<td class="px-6 py-4">
+										{statement.tekst}
+									</td>
+									<td class="px-6 py-4">
+										{statement.hovedkategori}
+									</td>
+									<td class="px-6 py-4">
+										{statement.underkategori}
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+				{/if}
+		{/await}
 	</div>
 </main>
