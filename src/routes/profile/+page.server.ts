@@ -4,7 +4,8 @@ import { Readable } from 'node:stream';
 import Papa from 'papaparse';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
+import { resolve } from 'node:path';
 
 interface csvBulderFormat {
     Dato: string,
@@ -22,7 +23,7 @@ interface csvBulderFormat {
 }
 
 interface accountStatementFormat {
-    dato: Date,
+    dato: string,
     innPaaKonto: string | null,
     utFraKonto: string | null,
     type: string | null,
@@ -35,7 +36,8 @@ export const load: PageServerLoad = async (event) => {
 
     if (!event.locals.user) return;
 
-    const accountStatements = db.select({ 
+    const accountStatements = db.select({
+            statementId: table.accountStatements.id,
             dato: table.accountStatements.dato,
             innPaaKonto: table.accountStatements.innPaaKonto,
             utFraKonto: table.accountStatements.utFraKonto,
@@ -73,7 +75,7 @@ export const actions: Actions = {
         if (typeof csv !== "object" || !csv) {
             return fail(400, { csv, missing: true})
         }
-        if (!event.locals.user?.id) {
+        if (!event.locals.user?.id || !event.locals.session) {
             return fail(401, { incorrect: true})
         }
 
@@ -81,15 +83,35 @@ export const actions: Actions = {
         const stream = Readable.from(Buffer.from(file));
         const parsedCSV = await parseCSV(stream)
 
-        console.log(parsedCSV)
-
         try {
             parsedCSV.forEach(async (line) => {
-                if (!event.locals.user?.id || !line.Dato) return;
+                if (!event.locals.user?.id) return;
+
+                if(!line.Dato) return fail(400, { message: "Atleast one line in the file is missing a date"});
+                
+                const accountStatement = await db.select({ 
+                    dato: table.accountStatements.dato
+                }).from(table.accountStatements).where(sql`
+                    ${table.accountStatements.userId}             = ${event.locals.user.id}
+                    and ${table.accountStatements.dato}           = ${line.Dato} 
+                    and ${table.accountStatements.innPaaKonto}    = ${line['Inn på konto']}
+                    and ${table.accountStatements.utFraKonto}     = ${line['Ut fra konto']}
+                    and ${table.accountStatements.tilKonto}       = ${line['Til konto']}
+                    and ${table.accountStatements.tilKontonummer} = ${line['Til kontonummer']}
+                    and ${table.accountStatements.fraKonto}       = ${line['Fra konto']}
+                    and ${table.accountStatements.fraKontonummer} = ${line['Fra kontonummer']}
+                    and ${table.accountStatements.type}           = ${line.Type}
+                    and ${table.accountStatements.tekst}          = ${line.Tekst}
+                    and ${table.accountStatements.kid}            = ${line.KID}
+                `).limit(1);
+                    
+                if (accountStatement.length !== 0) return;
+
+                console.log(line)
 
                 await db.insert(table.accountStatements).values({ 
                     userId: event.locals.user.id, 
-                    dato: new Date(line.Dato), 
+                    dato: line.Dato, 
                     innPaaKonto: line['Inn på konto'],
                     utFraKonto: line['Ut fra konto'],
                     tilKonto: line['Til konto'],
@@ -109,7 +131,7 @@ export const actions: Actions = {
             return fail(500, { message: 'An error has occurred' });
         }
     }
-};
+} satisfies Actions;
 
 const parseCSV = (stream: Readable): Promise<Array<csvBulderFormat>> => {
     return new Promise((resolve) => {

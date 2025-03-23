@@ -1,10 +1,12 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { enhance, applyAction  } from '$app/forms';
 	import { clickOutside } from 'svelte-outside';
 	import type { PageServerData } from './$types';
 	import type { ActionData } from './$types';
 
 	let uploadModal = $state(false)
+	let editStatementModal = $state(false)
+	let statementId: number | null = $state(null)
 
 	let { data, form }: {data: PageServerData, form: ActionData} = $props();
 
@@ -27,7 +29,17 @@
 				{#if form?.incorrect}
 					<p>You are not logged in, log in to upload file.</p>
 				{/if}
-				<form method="post" action="?/uploadCsv" class=" flex flex-col w-80 z-30 bg-neutral-800 h-96 relative rounded-md p-4" use:enhance enctype="multipart/form-data">
+				<form method="post" action="?/uploadCsv" class=" flex flex-col w-80 z-30 bg-neutral-800 h-96 relative rounded-md p-4" enctype="multipart/form-data" 
+				use:enhance={({}) => {
+					return async ({ result }) => {
+
+						if (result.type === "success") {
+							uploadModal = false
+						}
+
+						await applyAction(result);
+					}
+				}}>
 					<div class="flex items-center justify-center w-full">
 						<label for="csv" class="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:bg-neutral-700 bg-neutral-600 border-neutral-500 hover:border-neutral-400">
 							<div class="flex flex-col items-center justify-center pt-5 pb-6">
@@ -41,7 +53,7 @@
 						</label>
 					</div> 
 					<button type="submit" class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Upload file</button>
-					<button onclick={() => uploadModal = false} type="submit" class=" text-neutral-200 bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
+					<button onclick={() => uploadModal = false} class=" text-neutral-200 bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
 				</form>
 			</div>
 		{/if}
@@ -56,6 +68,37 @@
 			<div class=" w-5/12  rounded-4xl h-[600px] bg-neutral-800">
 				
 			</div>
+		</div>
+
+		<div class=" w-full flex justify-end">
+			{#if editStatementModal}
+				<div class=" fixed w-screen h-screen top-0 left-0 flex justify-center items-center">
+					<button onclick={() => editStatementModal = false} aria-label="Closes the edit statement modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
+					{#if form?.missing}
+						<p>No file or incorrect file type.</p>
+					{/if}
+					{#if form?.incorrect}
+						<p>You are not logged in, log in to upload file.</p>
+					{/if}
+					<form class=" flex flex-col w-80 z-30 bg-neutral-800 h-96 relative rounded-md p-4" enctype="multipart/form-data" 
+					use:enhance={({}) => {
+						return async ({ result }) => {
+	
+							if (result.type === "success") {
+								editStatementModal = false
+							}
+	
+							await applyAction(result);
+						}
+					}}>
+						<div class="flex items-center justify-center w-full">
+
+						</div> 
+						<button type="submit" class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Confirm changes</button>
+						<button onclick={() => editStatementModal = false} class=" text-neutral-200 bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
+					</form>
+				</div>
+			{/if}
 		</div>
 
 		{#await data.accountStatements}
@@ -87,13 +130,15 @@
 							<th scope="col" class="px-6 py-5">
 								Sub category
 							</th>
+							<th scope="col" class="px-6 py-5"></th>
+							<th scope="col" class="px-6 py-5"></th>
 						</tr>
 					</thead>
 					<tbody>
 							{#each accountStatements as statement}
-								<tr class=" border-b bg-neutral-800 border-neutral-700 ">
+								<tr class=" border-b bg-neutral-800 border-neutral-700 text-xs">
 									<td class="px-6 py-4 text-nowrap">
-										{statement.dato.toDateString()}
+										{new Date(statement.dato).toDateString()}
 									</td>
 									<td class="px-6 py-4">
 										{statement.innPaaKonto}
@@ -112,6 +157,19 @@
 									</td>
 									<td class="px-6 py-4">
 										{statement.underkategori}
+									</td>
+									<td class="px-6 py-4">
+										<button onclick={() => [editStatementModal = true, statementId = statement.statementId]} class=" flex text-nowrap font-bold cursor-pointer">. . .</button>
+									</td>
+									<td class="px-6 py-4">
+										<button 
+											onclick={async (e) => {
+												await fetch("/api/accountStatements/deleteStatement", {
+													method: "DELETE",
+													body: JSON.stringify(statement.statementId)
+												});
+											}} 
+											class=" flex text-nowrap font-bold cursor-pointer">x</button>
 									</td>
 								</tr>
 							{/each}
