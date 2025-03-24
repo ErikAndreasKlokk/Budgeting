@@ -4,9 +4,25 @@
 	import type { PageServerData } from './$types';
 	import type { ActionData } from './$types';
 
+	interface statement {
+    statementId: number;
+    dato: string;
+    innPaaKonto: string | null;
+    utFraKonto: string | null;
+    type: string | null;
+    tekst: string | null;
+    hovedkategori: string | null;
+    underkategori: string | null;
+}
+
 	let uploadModal = $state(false)
 	let editStatementModal = $state(false)
-	let statementId: number | null = $state(null)
+
+	let selectedText: string = $state("")
+	let selectedMainCategory: string = $state("")
+	let selectedSubCategory: string = $state("")
+
+	let selectedStatement: statement | null = $state(null)
 
 	let { data, form }: {data: PageServerData, form: ActionData} = $props();
 
@@ -80,19 +96,56 @@
 					{#if form?.incorrect}
 						<p>You are not logged in, log in to upload file.</p>
 					{/if}
-					<form class=" flex flex-col w-80 z-30 bg-neutral-800 h-96 relative rounded-md p-4" enctype="multipart/form-data" 
+					<form method="post" action="?/editStatement" class=" flex flex-col w-80 z-30 bg-neutral-800 h-96 relative rounded-md p-4"
 					use:enhance={({}) => {
 						return async ({ result }) => {
 	
 							if (result.type === "success") {
 								editStatementModal = false
 							}
+
+							if (data.accountStatements) {
+								const accountStatements = data.accountStatements.filter((dataStatement) => {
+									if (dataStatement.statementId === selectedStatement?.statementId) {
+										dataStatement.tekst
+									}
+								});
+								data = { ...data, }
+							}
 	
 							await applyAction(result);
 						}
 					}}>
-						<div class="flex items-center justify-center w-full">
-
+						<div class="flex items-center justify-center w-full flex-col">
+							<div class="relative z-0 w-full mb-5 group mt-2">
+								<label for="text" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Text</label>
+								<input type="text" id="text" name="text" value={selectedStatement?.tekst} class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+							</div>
+							{#await data.statistics}
+								<p>Awaiting data...</p>
+							{:then statistics} 
+								<div class="relative z-0 w-full mb-5 group mt-2">
+									<label for="hovedkategori" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Choose main category</label>
+									<select id="hovedkategori" name="hovedkategori" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+										{#if statistics}
+											{#each statistics.hovedkategorier as hovedkategori}
+												<option selected={selectedStatement?.hovedkategori === hovedkategori} value={hovedkategori}>{hovedkategori}</option>	
+											{/each}
+										{/if}
+									</select>
+								</div>
+								<div class="relative z-0 w-full mb-5 group mt-2">
+									<label for="underkategori" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Choose sub category</label>
+									<select id="underkategori" name="underkategori" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+										{#if statistics}
+											{#each statistics.underkategorier as underkategori}
+												<option selected={selectedStatement?.underkategori === underkategori} value={underkategori}>{underkategori}</option>	
+											{/each}
+										{/if}
+									</select>
+								</div>
+							{/await}
+							<input class=" hidden" type="text" name="id" id="id" value={selectedStatement?.statementId}>
 						</div> 
 						<button type="submit" class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Confirm changes</button>
 						<button onclick={() => editStatementModal = false} class=" text-neutral-200 bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
@@ -104,37 +157,34 @@
 		{#await data.accountStatements}
 			<div class=" w-11/12 rounded-xl bg-neutral-800 border border-neutral-700 h-60"></div>
 		{:then accountStatements} 
-		{#if accountStatements?.length !== 0 && accountStatements}
-			<div class=" w-11/12 rounded-xl bg-neutral-800 overflow-x-auto border border-neutral-700">
-				<table class="w-full text-sm text-left text-neutral-400 rounded-4xl">
-					<thead class="text-xs uppercase bg-neutral-700 text-neutral-200 text-nowrap">
-						<tr>
-							<th scope="col" class="px-6 py-5">
-								Date
-							</th>
-							<th scope="col" class="px-6 py-5">
-								Money in (+)
-							</th>
-							<th scope="col" class="px-6 py-5">
-								Money out (-)
-							</th>
-							<th scope="col" class="px-6 py-5">
-								Type
-							</th>
-							<th scope="col" class="px-6 py-5">
-								Text
-							</th>
-							<th scope="col" class="px-6 py-5">
-								Main category
-							</th>
-							<th scope="col" class="px-6 py-5">
-								Sub category
-							</th>
-							<th scope="col" class="px-6 py-5"></th>
-							<th scope="col" class="px-6 py-5"></th>
-						</tr>
-					</thead>
-					<tbody>
+			{#if accountStatements?.length !== 0 && accountStatements}
+				<div class=" w-11/12 rounded-xl bg-neutral-800 overflow-x-auto border border-neutral-700">
+					<table class="w-full text-sm text-left text-neutral-400 rounded-4xl">
+						<thead class="text-xs uppercase bg-neutral-700 text-neutral-200 text-nowrap">
+							<tr>
+								<th scope="col" class="px-6 py-5">
+									Date
+								</th>
+								<th scope="col" class="px-6 py-5">
+									Money in (+)
+								</th>
+								<th scope="col" class="px-6 py-5">
+									Money out (-)
+								</th>
+								<th scope="col" class="px-6 py-5">
+									Text
+								</th>
+								<th scope="col" class="px-6 py-5">
+									Main category
+								</th>
+								<th scope="col" class="px-6 py-5">
+									Sub category
+								</th>
+								<th scope="col" class="px-6 py-5"></th>
+								<th scope="col" class="px-6 py-5"></th>
+							</tr>
+						</thead>
+						<tbody>
 							{#each accountStatements as statement}
 								<tr class=" border-b bg-neutral-800 border-neutral-700 text-xs">
 									<td class="px-6 py-4 text-nowrap">
@@ -147,9 +197,6 @@
 										{statement.utFraKonto}
 									</td>
 									<td class="px-6 py-4">
-										{statement.type}
-									</td>
-									<td class="px-6 py-4">
 										{statement.tekst}
 									</td>
 									<td class="px-6 py-4">
@@ -159,15 +206,24 @@
 										{statement.underkategori}
 									</td>
 									<td class="px-6 py-4">
-										<button onclick={() => [editStatementModal = true, statementId = statement.statementId]} class=" flex text-nowrap font-bold cursor-pointer">. . .</button>
+										<button onclick={() => [editStatementModal = true, selectedStatement = statement]} class=" flex text-nowrap font-bold cursor-pointer">. . .</button>
 									</td>
 									<td class="px-6 py-4">
 										<button 
 											onclick={async (e) => {
 												await fetch("/api/accountStatements/deleteStatement", {
 													method: "DELETE",
+													headers: {
+														'Content-Type': 'application/json'
+													},
 													body: JSON.stringify(statement.statementId)
 												});
+
+												if (data.accountStatements) {
+													const accountStatements = data.accountStatements.filter((dataStatement) => dataStatement.statementId !== statement.statementId);
+													data = { ...data, accountStatements}
+												}
+
 											}} 
 											class=" flex text-nowrap font-bold cursor-pointer">x</button>
 									</td>
@@ -176,7 +232,7 @@
 						</tbody>
 					</table>
 				</div>
-				{/if}
+			{/if}
 		{/await}
 	</div>
 </main>

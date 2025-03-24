@@ -5,7 +5,6 @@ import Papa from 'papaparse';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import { eq, sql } from 'drizzle-orm';
-import { resolve } from 'node:path';
 
 interface csvBulderFormat {
     Dato: string,
@@ -47,7 +46,10 @@ export const load: PageServerLoad = async (event) => {
             underkategori: table.accountStatements.underkategori
         }).from(table.accountStatements).where(eq(
             table.accountStatements.userId, event.locals.user.id, 
-        ))
+        )).orderBy(table.accountStatements.dato)
+        
+    let hovedkategorier: string[] = ["No category"]
+    let underkategorier: string[] = ["No category"]
 
     function createStatistics(accountStatements: Array<accountStatementFormat>) {
         let moneyIn = 0
@@ -56,11 +58,24 @@ export const load: PageServerLoad = async (event) => {
         accountStatements.map((statement) => {
             moneyIn += Number(statement.innPaaKonto?.replace(",", "."))
             moneyOut += Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
+
+            if (statement.hovedkategori) {
+                if (!hovedkategorier.includes(statement.hovedkategori)) {
+                    hovedkategorier.push(statement.hovedkategori)
+                }
+            }
+            if (statement.underkategori) {
+                if (!underkategorier.includes(statement.underkategori)) {
+                    underkategorier.push(statement.underkategori)
+                }
+            }
         }) 
 
         return { 
             moneyIn: moneyIn, 
             moneyOut: moneyOut, 
+            hovedkategorier: hovedkategorier,
+            underkategorier: underkategorier
         }
     }
 
@@ -101,13 +116,10 @@ export const actions: Actions = {
                     and ${table.accountStatements.fraKonto}       = ${line['Fra konto']}
                     and ${table.accountStatements.fraKontonummer} = ${line['Fra kontonummer']}
                     and ${table.accountStatements.type}           = ${line.Type}
-                    and ${table.accountStatements.tekst}          = ${line.Tekst}
                     and ${table.accountStatements.kid}            = ${line.KID}
                 `).limit(1);
                     
                 if (accountStatement.length !== 0) return;
-
-                console.log(line)
 
                 await db.insert(table.accountStatements).values({ 
                     userId: event.locals.user.id, 
@@ -130,6 +142,34 @@ export const actions: Actions = {
         } catch (e) {
             return fail(500, { message: 'An error has occurred' });
         }
+    },
+    editStatement: async (event) => {
+        const formData = await event.request.formData();
+        const formTekst = formData.get("text") as string | null
+        let formHovedkategori = formData.get("hovedkategori") as string | null
+        let formUnderkategori = formData.get("underkategori") as string | null
+        const formId = formData.get("id") as string
+
+        if(!event.locals.user || !event.locals.session) return fail(401, { message: "Unauthorized request" });
+
+        console.log(formData)
+
+        if (formHovedkategori?.includes("No category")) {
+            formHovedkategori = null
+        }
+        if (formUnderkategori?.includes("No category")) {
+            formUnderkategori = null
+        }
+
+
+        await db.update(table.accountStatements).set({ 
+            tekst: formTekst, 
+            hovedkategori: formHovedkategori, 
+            underkategori: formUnderkategori
+        }).where(sql`
+            ${table.accountStatements.userId} = ${event.locals.user.id}
+            and ${table.accountStatements.id} = ${Number(formId)} 
+        `).limit(1)
     }
 } satisfies Actions;
 
