@@ -51,6 +51,7 @@
 
 						if (result.type === "success") {
 							uploadModal = false
+							location.reload()
 						}
 
 						await applyAction(result);
@@ -65,11 +66,11 @@
 								<p class="mb-2 text-sm text-neutral-200"><span class="font-semibold">Click to upload</span> or drag and drop</p>
 								<p class="text-xs text-neutral-200">CSV files only</p>
 							</div>
-							<input id="csv" type="file"  name="csv" class="hidden" required={true} />
+							<input id="csv" type="file"  name="csv" class="hidden" accept=".csv" required={true} />
 						</label>
 					</div> 
 					<button type="submit" class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Upload file</button>
-					<button onclick={() => uploadModal = false} class=" text-neutral-200 bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
+					<button onclick={() => uploadModal = false} type="button" class=" text-neutral-200 bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
 				</form>
 			</div>
 		{/if}
@@ -86,78 +87,70 @@
 			</div>
 		</div>
 
-		<div class=" w-full flex justify-end">
-			{#if editStatementModal}
-				<div class=" fixed w-screen h-screen top-0 left-0 flex justify-center items-center">
-					<button onclick={() => editStatementModal = false} aria-label="Closes the edit statement modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
-					{#if form?.missing}
-						<p>No file or incorrect file type.</p>
-					{/if}
-					{#if form?.incorrect}
-						<p>You are not logged in, log in to upload file.</p>
-					{/if}
-					<form method="post" action="?/editStatement" class=" flex flex-col w-80 z-30 bg-neutral-800 h-96 relative rounded-md p-4"
-					use:enhance={({}) => {
-						return async ({ result }) => {
-	
-							if (result.type === "success") {
-								editStatementModal = false
-							}
-
-							if (data.accountStatements) {
-								const accountStatements = data.accountStatements.filter((dataStatement) => {
-									if (dataStatement.statementId === selectedStatement?.statementId) {
-										dataStatement.tekst
-									}
-								});
-								data = { ...data, }
-							}
-	
-							await applyAction(result);
-						}
-					}}>
-						<div class="flex items-center justify-center w-full flex-col">
-							<div class="relative z-0 w-full mb-5 group mt-2">
-								<label for="text" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Text</label>
-								<input type="text" id="text" name="text" value={selectedStatement?.tekst} class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-							</div>
-							{#await data.statistics}
-								<p>Awaiting data...</p>
-							{:then statistics} 
-								<div class="relative z-0 w-full mb-5 group mt-2">
-									<label for="hovedkategori" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Choose main category</label>
-									<select id="hovedkategori" name="hovedkategori" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-										{#if statistics}
-											{#each statistics.hovedkategorier as hovedkategori}
-												<option selected={selectedStatement?.hovedkategori === hovedkategori} value={hovedkategori}>{hovedkategori}</option>	
-											{/each}
-										{/if}
-									</select>
-								</div>
-								<div class="relative z-0 w-full mb-5 group mt-2">
-									<label for="underkategori" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Choose sub category</label>
-									<select id="underkategori" name="underkategori" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-										{#if statistics}
-											{#each statistics.underkategorier as underkategori}
-												<option selected={selectedStatement?.underkategori === underkategori} value={underkategori}>{underkategori}</option>	
-											{/each}
-										{/if}
-									</select>
-								</div>
-							{/await}
-							<input class=" hidden" type="text" name="id" id="id" value={selectedStatement?.statementId}>
-						</div> 
-						<button type="submit" class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Confirm changes</button>
-						<button onclick={() => editStatementModal = false} class=" text-neutral-200 bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
-					</form>
-				</div>
-			{/if}
-		</div>
 
 		{#await data.accountStatements}
 			<div class=" w-11/12 rounded-xl bg-neutral-800 border border-neutral-700 h-60"></div>
 		{:then accountStatements} 
-			{#if accountStatements?.length !== 0 && accountStatements}
+			{#if accountStatements?.length !== 0 && accountStatements !== undefined}
+				{#if editStatementModal}
+					<div class=" fixed w-screen h-screen top-0 left-0 flex justify-center items-center">
+						<button onclick={() => editStatementModal = false} aria-label="Closes the edit statement modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
+						<form method="post" action="?/editStatement" class=" flex flex-col w-80 z-30 bg-neutral-800 h-96 relative rounded-md p-4"
+						use:enhance={({}) => {
+							return async ({ result, update }) => {
+
+								await applyAction(result);
+								
+								if (result.type === "success") {
+									editStatementModal = false
+									update();
+								}
+							}
+						}}>
+							<div class="flex items-center justify-center w-full flex-col">
+								<div class="relative z-0 w-full mb-5 group mt-2">
+									<label for="text" class="block mb-2 text-sm font-medium text-white">Text</label>
+									<input type="text" id="text" name="text" value={selectedStatement?.tekst} class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
+								</div>
+								{#await data.statistics}
+									<p>Awaiting data...</p>
+								{:then statistics}
+									<p class=" w-full text-start mb-2 text-sm font-medium ">Main category</p>
+									<div class="flex w-full mb-5">
+										<button class="shrink-0 z-10 inline-flex items-center py-2.5 px-4 text-sm font-medium text-center text-neutral-500 bg-neutral-100 border border-neutral-300 rounded-s-lg hover:bg-neutral-200 focus:ring-4 focus:outline-none focus:ring-neutral-100 dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:focus:ring-neutral-700 dark:text-white dark:border-neutral-600" type="button">
+											+
+										</button>
+										<label for="hovedkategori" class="sr-only">Choose a main category</label>
+										<select id="hovedkategori" name="hovedkategori" class=" text-sm rounded-e-lg border-s-neutral-700 border-s-2 block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
+											{#if statistics}
+												{#each statistics.hovedkategorier as hovedkategori}
+													<option selected={selectedStatement?.hovedkategori === hovedkategori} value={hovedkategori}>{hovedkategori}</option>	
+												{/each}
+											{/if}
+										</select>
+									</div>
+									<p class=" w-full text-start mb-2 text-sm font-medium ">Sub category</p>
+									<div class="flex w-full mb-5">
+										<button class="shrink-0 z-10 inline-flex items-center py-2.5 px-4 text-sm font-medium text-center text-neutral-500 bg-neutral-100 border border-neutral-300 rounded-s-lg hover:bg-neutral-200 focus:ring-4 focus:outline-none focus:ring-neutral-100 dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:focus:ring-neutral-700 dark:text-white dark:border-neutral-600" type="button">
+											+
+										</button>
+										<label for="underkategori" class="sr-only">Choose a sub category</label>
+										<select id="underkategori" name="underkategori" class=" text-sm rounded-e-lg border-s-neutral-700 border-s-2 block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
+											{#if statistics}
+												{#each statistics.underkategorier as underkategori}
+													<option selected={selectedStatement?.underkategori === underkategori} value={underkategori}>{underkategori}</option>	
+												{/each}
+											{/if}
+										</select>
+									</div>
+								{/await}
+								<input class=" hidden" type="text" name="id" id="id" value={selectedStatement?.statementId}>
+							</div> 
+							<button type="submit" class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Confirm changes</button>
+							<button onclick={() => editStatementModal = false} type="button" class=" text-neutral-200 bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
+						</form>
+					</div>
+				{/if}
 				<div class=" w-11/12 rounded-xl bg-neutral-800 overflow-x-auto border border-neutral-700">
 					<table class="w-full text-sm text-left text-neutral-400 rounded-4xl">
 						<thead class="text-xs uppercase bg-neutral-700 text-neutral-200 text-nowrap">

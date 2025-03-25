@@ -48,8 +48,8 @@ export const load: PageServerLoad = async (event) => {
             table.accountStatements.userId, event.locals.user.id, 
         )).orderBy(table.accountStatements.dato)
         
-    let hovedkategorier: string[] = ["No category"]
-    let underkategorier: string[] = ["No category"]
+    const hovedkategorier: string[] = ["No category"]
+    const underkategorier: string[] = ["No category"]
 
     function createStatistics(accountStatements: Array<accountStatementFormat>) {
         let moneyIn = 0
@@ -150,9 +150,9 @@ export const actions: Actions = {
         let formUnderkategori = formData.get("underkategori") as string | null
         const formId = formData.get("id") as string
 
-        if(!event.locals.user || !event.locals.session) return fail(401, { message: "Unauthorized request" });
-
         console.log(formData)
+
+        if(!event.locals.user || !event.locals.session) return fail(401, { message: "Unauthorized request" });
 
         if (formHovedkategori?.includes("No category")) {
             formHovedkategori = null
@@ -170,6 +170,8 @@ export const actions: Actions = {
             ${table.accountStatements.userId} = ${event.locals.user.id}
             and ${table.accountStatements.id} = ${Number(formId)} 
         `).limit(1)
+
+        return { formTekst: formTekst, formHovedkategori: formHovedkategori, formUnderkategori: formUnderkategori}
     }
 } satisfies Actions;
 

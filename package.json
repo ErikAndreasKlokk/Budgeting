@@ -47,6 +47,7 @@
 		"@oslojs/encoding": "^1.1.0",
 		"better-sqlite3": "^11.8.0",
 		"drizzle-orm": "^0.40.0",
+		"layerchart": "^1.0.8",
 		"papaparse": "^5.5.2",
 		"svelte-outside": "^0.0.3"
 	}
