@@ -4,7 +4,7 @@ import { Readable } from 'node:stream';
 import Papa from 'papaparse';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 
 interface csvBulderFormat {
     Dato: string,
@@ -21,7 +21,8 @@ interface csvBulderFormat {
     Underkategori: string | null
 }
 
-interface accountStatementFormat {
+export interface accountStatementFormat {
+    statementId: number,
     dato: string,
     innPaaKonto: string | null,
     utFraKonto: string | null,
@@ -46,10 +47,21 @@ export const load: PageServerLoad = async (event) => {
             underkategori: table.accountStatements.underkategori
         }).from(table.accountStatements).where(eq(
             table.accountStatements.userId, event.locals.user.id, 
-        )).orderBy(table.accountStatements.dato)
+        )).orderBy(desc(table.accountStatements.dato))
         
     const hovedkategorier: string[] = ["No category"]
     const underkategorier: string[] = ["No category"]
+    let kategoriData: { 
+        hovedkategori: string; 
+        underkategorier: { 
+            underkategori: string | null; 
+            statements: accountStatementFormat[]; 
+            moneyIn: number; moneyOut: number; 
+        }[]; 
+        statements: accountStatementFormat[]; 
+        moneyIn: number; 
+        moneyOut: number; 
+    }[] = []
 
     function createStatistics(accountStatements: Array<accountStatementFormat>) {
         let moneyIn = 0
@@ -63,23 +75,88 @@ export const load: PageServerLoad = async (event) => {
                 if (!hovedkategorier.includes(statement.hovedkategori)) {
                     hovedkategorier.push(statement.hovedkategori)
                 }
+                if (kategoriData.some(e => e.hovedkategori === statement.hovedkategori)) {
+                    const newKategoriData = kategoriData.map((kategori) => {
+                        if (kategori.hovedkategori === statement.hovedkategori) {
+                            if (!kategori.underkategorier.some(e => e.underkategori === statement.underkategori)) {
+                                kategori.underkategorier.push({
+                                    underkategori: statement.underkategori,
+                                    statements: [statement],
+                                    moneyIn: Number(statement.innPaaKonto?.replace(",", ".")),
+                                    moneyOut: Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
+                                })
+                            } else {
+                                kategori.underkategorier = kategori.underkategorier.map((underkategori) => {
+                                    if (underkategori.underkategori === statement.underkategori) {
+                                        underkategori.moneyIn += Number(statement.innPaaKonto?.replace(",", "."))
+                                        underkategori.moneyOut += Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
+                                        underkategori.statements.push(statement)
+                                    }
+                                    return underkategori;
+                                })
+                            }
+                            kategori.statements.push(statement)
+                            kategori.moneyIn += Number(statement.innPaaKonto?.replace(",", "."))
+                            kategori.moneyOut += Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
+                        }
+                        return kategori;
+                    })
+                    kategoriData = newKategoriData;
+                } else {
+                    kategoriData.push(
+                        {
+                            hovedkategori: statement.hovedkategori,
+                            underkategorier: [
+                                {
+                                    underkategori: statement.underkategori,
+                                    statements: [statement],
+                                    moneyIn: Number(statement.innPaaKonto?.replace(",", ".")),
+                                    moneyOut: Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
+                                }
+                            ],
+                            statements: [statement],
+                            moneyIn: Number(statement.innPaaKonto?.replace(",", ".")),
+                            moneyOut: Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
+                        }
+                    );
+                }
             }
+
             if (statement.underkategori) {
                 if (!underkategorier.includes(statement.underkategori)) {
                     underkategorier.push(statement.underkategori)
                 }
             }
+
+
         }) 
 
         return { 
             moneyIn: moneyIn, 
             moneyOut: moneyOut, 
             hovedkategorier: hovedkategorier,
-            underkategorier: underkategorier
+            underkategorier: underkategorier,
+            kategoriData: kategoriData
         }
     }
 
-    return { user: event.locals.user, accountStatements: await accountStatements, statistics: createStatistics(await accountStatements)};
+    function prettierAccountStatements(accountStatements: Array<accountStatementFormat>) {
+
+        const accountStatements2 = accountStatements.map((statement) => {
+            if (statement.hovedkategori === "No category") statement.hovedkategori = null;
+            if (statement.underkategori === "No category") statement.underkategori = null;
+
+            return statement;
+        })
+
+        return accountStatements2
+    }
+
+    return { 
+        user: event.locals.user, 
+        accountStatements: prettierAccountStatements(await accountStatements), 
+        statistics: createStatistics(await accountStatements)
+    };
 };
 
 export const actions: Actions = {
@@ -121,6 +198,9 @@ export const actions: Actions = {
                     
                 if (accountStatement.length !== 0) return;
 
+                if (line.Hovedkategori === "" || line.Hovedkategori === null) line.Hovedkategori = "No category";
+                if (line.Underkategori === "" || line.Underkategori === null) line.Underkategori = "No category";
+
                 await db.insert(table.accountStatements).values({ 
                     userId: event.locals.user.id, 
                     dato: line.Dato, 
@@ -146,21 +226,11 @@ export const actions: Actions = {
     editStatement: async (event) => {
         const formData = await event.request.formData();
         const formTekst = formData.get("text") as string | null
-        let formHovedkategori = formData.get("hovedkategori") as string | null
-        let formUnderkategori = formData.get("underkategori") as string | null
+        const formHovedkategori = formData.get("hovedkategori") as string | null
+        const formUnderkategori = formData.get("underkategori") as string | null
         const formId = formData.get("id") as string
 
-        console.log(formData)
-
         if(!event.locals.user || !event.locals.session) return fail(401, { message: "Unauthorized request" });
-
-        if (formHovedkategori?.includes("No category")) {
-            formHovedkategori = null
-        }
-        if (formUnderkategori?.includes("No category")) {
-            formUnderkategori = null
-        }
-
 
         await db.update(table.accountStatements).set({ 
             tekst: formTekst, 
