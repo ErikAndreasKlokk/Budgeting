@@ -179,17 +179,7 @@
 						{#await data.statistics}
 							<p>Awaiting data...</p>
 						{:then statistics}
-						<form class=" flex flex-col w-80 z-30 bg-neutral-800 h-96 relative rounded-md p-4"
-						use:enhance={({}) => {
-							return async ({ result, update }) => {
-								await applyAction(result);
-								
-								if (result.type === "success") {
-									addCategoryModal = false
-									update();
-								}
-							}
-						}}>
+						<form class=" flex flex-col w-80 z-30 bg-neutral-800 h-96 relative rounded-md p-4">
 							<div class="flex items-center justify-center w-full flex-col">
 
 								<div class="relative z-0 w-full mb-5 group mt-2">
@@ -198,10 +188,16 @@
 								</div>
 							</div> 
 							<button type="button" onclick={() => {
-								if (isMainCategory) {
-									statistics?.hovedkategorier.push(addCategoryValue)
+								if (isMainCategory && data.statistics) {
+									const statistics = data.statistics
+									statistics.hovedkategorier.push(addCategoryValue)
+									data = { ...data, statistics}
 								} else {
-									statistics?.underkategorier.push(addCategoryValue)
+									if (data.statistics) {
+										const statistics = data.statistics
+										statistics.underkategorier.push(addCategoryValue)
+										data = { ...data, statistics}
+									}
 								}
 
 								addCategoryModal = false
@@ -247,8 +243,8 @@
 										</button>
 										<label for="hovedkategori" class="sr-only">Choose a main category</label>
 										<select id="hovedkategori" name="hovedkategori" class=" cursor-pointer text-sm rounded-e-lg border-s-neutral-700 border-s-2 block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
-											{#if statistics}
-												{#each statistics.hovedkategorier as hovedkategori}
+											{#if data.statistics}
+												{#each data.statistics.hovedkategorier as hovedkategori}
 													<option selected={selectedStatement?.hovedkategori === hovedkategori} value={hovedkategori}>{hovedkategori}</option>	
 												{/each}
 											{/if}
@@ -264,8 +260,8 @@
 										</button>
 										<label for="underkategori" class="sr-only">Choose a sub category</label>
 										<select id="underkategori" name="underkategori" class=" cursor-pointer text-sm rounded-e-lg border-s-neutral-700 border-s-2 block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
-											{#if statistics}
-												{#each statistics.underkategorier as underkategori}
+											{#if data.statistics}
+												{#each data.statistics.underkategorier as underkategori}
 													<option selected={selectedStatement?.underkategori === underkategori} value={underkategori}>{underkategori}</option>	
 												{/each}
 											{/if}
