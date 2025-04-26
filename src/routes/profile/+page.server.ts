@@ -198,8 +198,8 @@ export const actions: Actions = {
                     
                 if (accountStatement.length !== 0) return;
 
-                if (line.Hovedkategori === "" || line.Hovedkategori === null) line.Hovedkategori = "No category";
-                if (line.Underkategori === "" || line.Underkategori === null) line.Underkategori = "No category";
+                if (!line.Hovedkategori || line.Hovedkategori.trim() === "") line.Hovedkategori = "No category";
+                if (!line.Underkategori || line.Underkategori.trim() === "") line.Underkategori = "No category";
 
                 await db.insert(table.accountStatements).values({ 
                     userId: event.locals.user.id, 
