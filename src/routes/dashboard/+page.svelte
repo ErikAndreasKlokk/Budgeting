@@ -18,8 +18,6 @@
 
 	let { data, form }: {data: PageServerData, form: ActionData} = $props();
 
-	const kategoridata = $derived(data.statistics?.kategoriData)
-
 	const keyColors = [
 		'#1C86EE', // Darker Dodger Blue
 		'#36648B', // Darker Steel Blue
@@ -45,13 +43,12 @@
 		'#2F4F4F'  // Dark Slate Gray (already dark)
 	];
 
-
-
 </script>
 
 <main class=" w-full flex flex-col items-center bg-neutral-800 h-full">
 	<div class=" flex flex-col gap-20 my-20 px-12 items-center z-0 w-full max-w-[1100px]">
-		<div use:clickOutside={() => uploadModal = false} class=" w-full flex justify-end">
+		<div use:clickOutside={() => uploadModal = false} class=" w-full flex justify-between items-center">
+			<p class=" text-4xl font-bold ">Dashboard</p>
 			<button onclick={() => uploadModal = true} class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 flex gap-2 items-center hover:bg-blue-800">
 				Upload account statement
 				<svg class="w-5 h-5 text-neutral-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
@@ -85,14 +82,14 @@
 									<svg class="w-8 h-8 mb-4 text-neutral-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
 										<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
 									</svg>
-									<p class="mb-2 text-sm text-neutral-200"><span class="font-semibold">Click to upload</span> or drag and drop</p>
-									<p class="text-xs text-neutral-200">CSV files only</p>
+									<p class="mb-2 text-sm "><span class="font-semibold">Click to upload</span> or drag and drop</p>
+									<p class="text-xs ">CSV files only</p>
 								</div>
 								<input id="csv" type="file"  name="csv" class="hidden" accept=".csv" required={true} />
 							</label>
 						</div> 
 						<button type="submit" class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Upload file</button>
-						<button onclick={() => uploadModal = false} type="button" class=" text-neutral-200 bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
+						<button onclick={() => uploadModal = false} type="button" class="  bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
 					</form>
 				</div>
 			{/if}
@@ -100,7 +97,7 @@
 		<div class=" flex justify-evenly w-full gap-20">
 			<div class=" w-full rounded-2xl h-[600px] bg-neutral-900 flex flex-col p-10">
 				<div class=" mb-9">
-					<p class=" text-4xl font-bold text-neutral-200">Money spent</p>
+					<p class=" text-4xl font-bold ">Money spent</p>
 					<p class=" italic text-neutral-400">The last 30 days</p>
 				</div>
 				{#await data.statistics}
@@ -146,7 +143,7 @@
 	
 			<div class=" w-full rounded-2xl h-[600px] bg-neutral-900 flex flex-col p-10">
 				<div class=" mb-9">
-					<p class=" text-4xl font-bold text-neutral-200">Money earned</p>
+					<p class=" text-4xl font-bold ">Money earned</p>
 					<p class=" italic text-neutral-400">The last 30 days</p>
 				</div>
 				{#await data.statistics}
@@ -227,7 +224,7 @@
 								addCategoryModal = false
 							}} 
 							class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Add category</button>
-							<button onclick={() => addCategoryModal = false} type="button" class=" text-neutral-200 bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
+							<button onclick={() => addCategoryModal = false} type="button" class="  bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
 						</form>
 						{/await}
 					</div>
@@ -293,13 +290,13 @@
 								<input class=" hidden" type="text" name="id" id="id" value={selectedStatement?.statementId}>
 							</div> 
 							<button type="submit" class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Confirm changes</button>
-							<button onclick={() => editStatementModal = false} type="button" class=" text-neutral-200 bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
+							<button onclick={() => editStatementModal = false} type="button" class="  bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
 						</form>
 					</div>
 				{/if}
 				<div class=" rounded-xl bg-neutral-900 overflow-x-auto ">
-					<table class="w-full text-sm text-left text-neutral-400 rounded-4xl">
-						<thead class="text-xs uppercase bg-neutral-950 text-neutral-200 text-nowrap">
+					<table class="w-full text-sm text-left rounded-4xl">
+						<thead class="text-xs uppercase bg-neutral-950  text-nowrap">
 							<tr>
 								<th scope="col" class="px-6 py-5">
 									Date
@@ -325,7 +322,7 @@
 						</thead>
 						<tbody>
 							{#each accountStatements as statement}
-								<tr class=" border-b bg-neutral-900 border-neutral-800 text-xs">
+								<tr class=" border-b bg-neutral-900 border-neutral-800 text-xs text-neutral-400">
 									<td class="px-6 py-4 text-nowrap">
 										{new Date(statement.dato).toDateString()}
 									</td>
