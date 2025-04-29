@@ -15,6 +15,7 @@
 	let isMainCategory = $state(false)
 
 	let selectedStatement: accountStatementFormat | null = $state(null)
+	let selectedStatements: accountStatementFormat[] = $state([])
 
 	let { data, form }: {data: PageServerData, form: ActionData} = $props();
 
@@ -56,7 +57,7 @@
 				</svg>
 			</button>
 			{#if uploadModal}
-				<div class=" fixed w-screen h-screen top-0 left-0 flex justify-center items-center">
+				<div class=" fixed w-screen h-screen top-0 left-0 flex justify-center items-center z-50">
 					<button onclick={() => uploadModal = false} aria-label="Closes the upload modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
 					{#if form?.missing}
 						<p>No file or incorrect file type.</p>
@@ -167,8 +168,10 @@
 									</Tooltip.List>
 								</Tooltip.Root>
 							</Chart>
-							<p class=" absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-bold text-2xl ">{statistics?.moneyIn.toFixed(0)} kr</p>
-							<p class=" absolute bottom-1 right-10 {statistics?.moneyIn - statistics?.moneyOut < 0 ? "text-[#ff2222]" : "text-[#00B86B]"} text-2xl font-bold">{statistics?.moneyIn - statistics?.moneyOut < 0 ? "" : "+"}{(statistics?.moneyIn - statistics?.moneyOut).toFixed(0)} kr</p>
+							<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+								<p class=" {statistics?.moneyIn - statistics?.moneyOut < 0 ? "text-[#ff2222]" : "text-[#00B86B]"} text-2xl font-bold">{statistics?.moneyIn - statistics?.moneyOut < 0 ? "" : "+"}{(statistics?.moneyIn - statistics?.moneyOut).toFixed(0)} kr</p>
+								<p class=" font-semibold text-xs text-end absolute right-0 top-7 text-neutral-400">/ {statistics?.moneyIn.toFixed(0)} kr</p>
+							</div>
 						</div>
 						<div class=" h-[200px] flex flex-col">
 							<p class="text-2xl w-full font-bold">Top 3 categories</p>
@@ -299,6 +302,9 @@
 						<thead class="text-xs uppercase bg-neutral-950  text-nowrap">
 							<tr>
 								<th scope="col" class="px-6 py-5">
+									<input type="checkbox" name="checkbox" id="checkbox" class=" cursor-pointer w-4 h-4 text-blue-600 bg-neutral-700 border-neutral-600 focus:ring-blue-500 focus:ring-2 rounded-md"/>
+								</th>
+								<th scope="col" class="px-6 py-5">
 									Date
 								</th>
 								<th scope="col" class="px-6 py-5">
@@ -316,13 +322,36 @@
 								<th scope="col" class="px-6 py-5">
 									Sub category
 								</th>
-								<th scope="col" class="px-6 py-5"></th>
-								<th scope="col" class="px-6 py-5"></th>
+								<td class="px-6 py-4">
+									<button disabled={true} onclick={() => [editStatementModal = true, ]} class=" flex text-nowrap font-bold cursor-pointer">. . .</button>
+								</td>
+								<td class="px-6 py-4">
+									<button 
+										disabled={true}
+										onclick={async (e) => {
+											await fetch("/api/accountStatements/deleteStatement", {
+												method: "DELETE",
+												headers: {
+													'Content-Type': 'application/json'
+												},
+												body: JSON.stringify("all")
+											});
+
+											// if (data.accountStatements) {
+											// 	const accountStatements = data.accountStatements.filter((dataStatement) => dataStatement.statementId !== statement.statementId);
+											// 	data = { ...data, accountStatements}
+											// }
+										}} 
+										class=" flex text-nowrap font-bold cursor-pointer">x</button>
+								</td>
 							</tr>
 						</thead>
 						<tbody>
 							{#each accountStatements as statement}
 								<tr class=" border-b bg-neutral-900 border-neutral-800 text-xs text-neutral-400">
+									<th scope="col" class="px-6 py-5">
+										<input bind:group={selectedStatements} value={statement} type="checkbox" name="checkbox" id="checkbox" class=" cursor-pointer w-4 h-4 text-blue-600 bg-neutral-700 border-neutral-600 focus:ring-blue-500 focus:ring-2 rounded-md"/>
+									</th>
 									<td class="px-6 py-4 text-nowrap">
 										{new Date(statement.dato).toDateString()}
 									</td>
@@ -359,7 +388,6 @@
 													const accountStatements = data.accountStatements.filter((dataStatement) => dataStatement.statementId !== statement.statementId);
 													data = { ...data, accountStatements}
 												}
-
 											}} 
 											class=" flex text-nowrap font-bold cursor-pointer">x</button>
 									</td>
@@ -376,11 +404,11 @@
 										<button aria-label="Go to page 1">
 											1
 										</button>
-										<button aria-label="Go to page 1">
-											1
+										<button aria-label="Go to page 2">
+											2
 										</button>
-										<button aria-label="Go to page 1">
-											1
+										<button aria-label="Go to page 3">
+											3
 										</button>
 									</div>
 								</td>
