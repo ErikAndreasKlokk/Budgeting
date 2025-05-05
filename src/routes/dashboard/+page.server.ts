@@ -5,6 +5,7 @@ import Papa from 'papaparse';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
+import { stringify } from 'node:querystring';
 
 interface csvBulderFormat {
     Dato: string,
@@ -229,19 +230,39 @@ export const actions: Actions = {
         const formHovedkategori = formData.get("hovedkategori") as string | null
         const formUnderkategori = formData.get("underkategori") as string | null
         const formId = formData.get("id") as string
+        const formIdJson = JSON.parse(formId) as Array<accountStatementFormat>
 
         if(!event.locals.user || !event.locals.session) return fail(401, { message: "Unauthorized request" });
 
-        await db.update(table.accountStatements).set({ 
-            tekst: formTekst, 
-            hovedkategori: formHovedkategori, 
-            underkategori: formUnderkategori
-        }).where(sql`
-            ${table.accountStatements.userId} = ${event.locals.user.id}
-            and ${table.accountStatements.id} = ${Number(formId)} 
-        `).limit(1)
+        console.log(formIdJson)
 
-        return { formTekst: formTekst, formHovedkategori: formHovedkategori, formUnderkategori: formUnderkategori}
+        if (typeof formIdJson === "object") {
+            console.log("hei")
+            formIdJson.map(async (statement) => {
+                await db.update(table.accountStatements).set({ 
+                    tekst: formTekst ? formTekst : statement.tekst, 
+                    hovedkategori: formHovedkategori ? formHovedkategori : statement.hovedkategori, 
+                    underkategori: formUnderkategori ? formUnderkategori : statement.underkategori
+                }).where(sql`
+                    ${table.accountStatements.userId} = ${event.locals.user.id}
+                    and ${table.accountStatements.id} = ${Number(statement.statementId)} 
+                `).limit(1)
+
+            })
+            return { formTekst: formTekst, formHovedkategori: formHovedkategori, formUnderkategori: formUnderkategori}
+        } else {
+            await db.update(table.accountStatements).set({ 
+                tekst: formTekst, 
+                hovedkategori: formHovedkategori, 
+                underkategori: formUnderkategori
+            }).where(sql`
+                ${table.accountStatements.userId} = ${event.locals.user.id}
+                and ${table.accountStatements.id} = ${Number(formIdJson)} 
+            `).limit(1)
+
+            return { formTekst: formTekst, formHovedkategori: formHovedkategori, formUnderkategori: formUnderkategori}
+        }
+
     }
 } satisfies Actions;
 

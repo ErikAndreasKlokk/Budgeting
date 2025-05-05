@@ -127,14 +127,14 @@
 							<p class="text-2xl w-full font-bold">Top 3 categories</p>
 							<div class=" flex mt-6 w-full justify-between">
 								<ol>
-									<li>1. {statistics?.kategoriData.sort((a, b) => b.moneyOut - a.moneyOut)[0].hovedkategori}</li>
-									<li>2. {statistics?.kategoriData.sort((a, b) => b.moneyOut - a.moneyOut)[1].hovedkategori}</li>
-									<li>3. {statistics?.kategoriData.sort((a, b) => b.moneyOut - a.moneyOut)[2].hovedkategori}</li>
+									<li>1. {statistics?.kategoriData?.sort((a, b) => b?.moneyOut - a?.moneyOut)[0]?.hovedkategori}</li>
+									<li>2. {statistics?.kategoriData?.sort((a, b) => b?.moneyOut - a?.moneyOut)[1]?.hovedkategori}</li>
+									<li>3. {statistics?.kategoriData?.sort((a, b) => b?.moneyOut - a?.moneyOut)[2]?.hovedkategori}</li>
 								</ol>
 								<ol class=" text-end font-bold italic">
-									<li>{statistics?.kategoriData.sort((a, b) => b.moneyOut - a.moneyOut)[0].moneyOut.toFixed(0)} kr</li>
-									<li>{statistics?.kategoriData.sort((a, b) => b.moneyOut - a.moneyOut)[1].moneyOut.toFixed(0)} kr</li>
-									<li>{statistics?.kategoriData.sort((a, b) => b.moneyOut - a.moneyOut)[2].moneyOut.toFixed(0)} kr</li>
+									<li>{statistics?.kategoriData.sort((a, b) => b?.moneyOut - a?.moneyOut)[0]?.moneyOut.toFixed(0)} kr</li>
+									<li>{statistics?.kategoriData.sort((a, b) => b?.moneyOut - a?.moneyOut)[1]?.moneyOut.toFixed(0)} kr</li>
+									<li>{statistics?.kategoriData.sort((a, b) => b?.moneyOut - a?.moneyOut)[2]?.moneyOut.toFixed(0)} kr</li>
 								</ol>
 							</div>
 						</div>
@@ -177,14 +177,14 @@
 							<p class="text-2xl w-full font-bold">Top 3 categories</p>
 							<div class=" flex mt-6 w-full justify-between">
 								<ol>
-									<li>1. {statistics?.kategoriData.sort((a, b) => b.moneyIn - a.moneyIn)[0].hovedkategori}</li>
-									<li>2. {statistics?.kategoriData.sort((a, b) => b.moneyIn - a.moneyIn)[1].hovedkategori}</li>
-									<li>3. {statistics?.kategoriData.sort((a, b) => b.moneyIn - a.moneyIn)[2].hovedkategori}</li>
+									<li>1. {statistics?.kategoriData?.sort((a, b) => b?.moneyIn - a?.moneyIn)[0]?.hovedkategori}</li>
+									<li>2. {statistics?.kategoriData?.sort((a, b) => b?.moneyIn - a?.moneyIn)[1]?.hovedkategori}</li>
+									<li>3. {statistics?.kategoriData?.sort((a, b) => b?.moneyIn - a?.moneyIn)[2]?.hovedkategori}</li>
 								</ol>
 								<ol class=" text-end font-bold italic">
-									<li>{statistics?.kategoriData.sort((a, b) => b.moneyIn - a.moneyIn)[0].moneyIn.toFixed(0)} kr</li>
-									<li>{statistics?.kategoriData.sort((a, b) => b.moneyIn - a.moneyIn)[1].moneyIn.toFixed(0)} kr</li>
-									<li>{statistics?.kategoriData.sort((a, b) => b.moneyIn - a.moneyIn)[2].moneyIn.toFixed(0)} kr</li>
+									<li>{statistics?.kategoriData?.sort((a, b) => b?.moneyIn - a?.moneyIn)[0]?.moneyIn.toFixed(0)} kr</li>
+									<li>{statistics?.kategoriData?.sort((a, b) => b?.moneyIn - a?.moneyIn)[1]?.moneyIn.toFixed(0)} kr</li>
+									<li>{statistics?.kategoriData?.sort((a, b) => b?.moneyIn - a?.moneyIn)[2]?.moneyIn.toFixed(0)} kr</li>
 								</ol>
 							</div>
 						</div>
@@ -290,7 +290,7 @@
 										</select>
 									</div>
 								{/await}
-								<input class=" hidden" type="text" name="id" id="id" value={selectedStatement?.statementId}>
+								<input class=" hidden" type="text" name="id" id="id" value={selectedStatements.length > 0 ? JSON.stringify(selectedStatements.flat()) : selectedStatement?.statementId}>
 							</div> 
 							<button type="submit" class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Confirm changes</button>
 							<button onclick={() => editStatementModal = false} type="button" class="  bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
@@ -302,7 +302,7 @@
 						<thead class="text-xs uppercase bg-neutral-950  text-nowrap">
 							<tr>
 								<th scope="col" class="px-6 py-5">
-									<input type="checkbox" name="checkbox" id="checkbox" class=" cursor-pointer w-4 h-4 text-blue-600 bg-neutral-700 border-neutral-600 focus:ring-blue-500 focus:ring-2 rounded-md"/>
+									<input bind:group={selectedStatements} value={accountStatements} type="checkbox" name="checkbox" id="checkbox"  class=" cursor-pointer w-4 h-4 text-blue-600 bg-neutral-700 border-neutral-600 rounded-sm focus:ring-0"/>
 								</th>
 								<th scope="col" class="px-6 py-5">
 									Date
@@ -323,25 +323,29 @@
 									Sub category
 								</th>
 								<td class="px-6 py-4">
-									<button disabled={true} onclick={() => [editStatementModal = true, ]} class=" flex text-nowrap font-bold cursor-pointer">. . .</button>
+									<button onclick={() => [editStatementModal = true]} class=" flex text-nowrap font-bold cursor-pointer">. . .</button>
 								</td>
 								<td class="px-6 py-4">
 									<button 
-										disabled={true}
 										onclick={async (e) => {
-											await fetch("/api/accountStatements/deleteStatement", {
-												method: "DELETE",
-												headers: {
-													'Content-Type': 'application/json'
-												},
-												body: JSON.stringify("all")
+											selectedStatements = selectedStatements.flat()
+											selectedStatements.forEach(async statement => {
+												await fetch("/api/accountStatements/deleteStatement", {
+													method: "DELETE",
+													headers: {
+														'Content-Type': 'application/json'
+													},
+													body: JSON.stringify(statement.statementId)
+												});
 											});
 
-											// if (data.accountStatements) {
-											// 	const accountStatements = data.accountStatements.filter((dataStatement) => dataStatement.statementId !== statement.statementId);
-											// 	data = { ...data, accountStatements}
-											// }
-										}} 
+											 if (data.accountStatements) {
+												const accountStatements = data.accountStatements.filter((dataStatement) => {
+													return selectedStatements.filter((selectedStatementFilter) => dataStatement.statementId === selectedStatementFilter.statementId).length === 0
+												});
+												data = { ...data, accountStatements}
+											}
+										}}
 										class=" flex text-nowrap font-bold cursor-pointer">x</button>
 								</td>
 							</tr>
@@ -350,7 +354,7 @@
 							{#each accountStatements as statement}
 								<tr class=" border-b bg-neutral-900 border-neutral-800 text-xs text-neutral-400">
 									<th scope="col" class="px-6 py-5">
-										<input bind:group={selectedStatements} value={statement} type="checkbox" name="checkbox" id="checkbox" class=" cursor-pointer w-4 h-4 text-blue-600 bg-neutral-700 border-neutral-600 focus:ring-blue-500 focus:ring-2 rounded-md"/>
+										<input bind:group={selectedStatements} value={statement} type="checkbox" name="checkbox" id="checkbox" class=" cursor-pointer w-4 h-4 bg-neutral-700 border border-neutral-600 rounded-sm focus:ring-0"/>
 									</th>
 									<td class="px-6 py-4 text-nowrap">
 										{new Date(statement.dato).toDateString()}
@@ -394,30 +398,10 @@
 								</tr>
 							{/each}
 						</tbody>
-						<tfoot>
-							<tr class=" border-b bg-neutral-900 border-neutral-800 text-xs">
-								<td class="px-6 py-4 text-nowrap font-bold text-lg">
-									{"<"}
-								</td>
-								<td class="px-6 py-4 text-nowrap font-bold text-lg">
-									<div>
-										<button aria-label="Go to page 1">
-											1
-										</button>
-										<button aria-label="Go to page 2">
-											2
-										</button>
-										<button aria-label="Go to page 3">
-											3
-										</button>
-									</div>
-								</td>
-								<td class="px-6 py-4 text-nowrap font-bold text-lg">
-									{">"}
-								</td>
-							</tr>
-						</tfoot>
 					</table>
+					<div>
+
+					</div>
 				</div>
 			{/if}
 		{/await}
