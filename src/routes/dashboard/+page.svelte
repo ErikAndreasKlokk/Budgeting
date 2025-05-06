@@ -13,12 +13,14 @@
 	let addCategoryModal = $state(false)
 	let addCategoryValue = $state("")
 	let isMainCategory = $state(false)
+	let confirmDeleteStatementModal = $state(false)
 
 	let selectedStatement: accountStatementFormat | null = $state(null)
 	let selectedStatements: accountStatementFormat[] = $state([])
 
+	
 	let { data, form }: {data: PageServerData, form: ActionData} = $props();
-
+	
 	const keyColors = [
 		'#1C86EE', // Darker Dodger Blue
 		'#36648B', // Darker Steel Blue
@@ -44,6 +46,12 @@
 		'#2F4F4F'  // Dark Slate Gray (already dark)
 	];
 
+	function toggleAllCheckboxes() {
+		console.log(data.accountStatements)
+		selectedStatements = data.accountStatements
+		console.log(selectedStatements)
+	}
+
 </script>
 
 <main class=" w-full flex flex-col items-center bg-neutral-800 h-full">
@@ -56,6 +64,9 @@
 					<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
 				</svg>
 			</button>
+			<!-- ---------------- -->
+			<!-- Upload csv modal -->
+			<!-- ---------------- -->
 			{#if uploadModal}
 				<div class=" fixed w-screen h-screen top-0 left-0 flex justify-center items-center z-50">
 					<button onclick={() => uploadModal = false} aria-label="Closes the upload modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
@@ -95,6 +106,9 @@
 				</div>
 			{/if}
 		</div>
+		<!-- ---------------- -->
+		<!-- Money spent card -->
+		<!-- ---------------- -->
 		<div class=" flex justify-evenly w-full gap-20">
 			<div class=" w-full rounded-2xl h-[600px] bg-neutral-900 flex flex-col p-10">
 				<div class=" mb-9">
@@ -141,7 +155,9 @@
 					{/if}
 				{/await}
 			</div>
-	
+			<!-- ----------------- -->
+			<!-- Money earned card -->
+			<!-- ----------------- -->
 			<div class=" w-full rounded-2xl h-[600px] bg-neutral-900 flex flex-col p-10">
 				<div class=" mb-9">
 					<p class=" text-4xl font-bold ">Money earned</p>
@@ -193,10 +209,17 @@
 			</div>
 		</div>
 
+
+<!-- ----------------------------------------------------------------------------------------------------------- -->
+
+
 		{#await data.accountStatements}
 			<div class=" w-11/12 rounded-xl bg-neutral-800 border border-neutral-700 h-60"></div>
 		{:then accountStatements} 
 			{#if accountStatements?.length !== 0 && accountStatements !== undefined}
+				<!-- ------------------ -->
+				<!-- add category modal -->
+				<!-- ------------------ -->
 				{#if addCategoryModal}
 					<div class=" fixed w-screen h-screen top-0 left-0 flex justify-center items-center z-50">
 						<button onclick={() => addCategoryModal = false} aria-label="Closes the edit statement modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
@@ -232,6 +255,9 @@
 						{/await}
 					</div>
 				{/if}
+				<!-- -------------------- -->
+				<!-- edit statement modal -->
+				<!-- -------------------- -->
 				{#if editStatementModal}
 					<div class=" fixed w-screen h-screen top-0 left-0 flex justify-center items-center">
 						<button onclick={() => editStatementModal = false} aria-label="Closes the edit statement modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
@@ -243,6 +269,8 @@
 								
 								if (result.type === "success") {
 									editStatementModal = false
+									selectedStatement = null
+									selectedStatements = []
 									update();
 								}
 							}
@@ -250,7 +278,7 @@
 							<div class="flex items-center justify-center w-full flex-col">
 								<div class="relative z-0 w-full mb-5 group mt-2">
 									<label for="text" class="block mb-2 text-sm font-medium text-white">Text</label>
-									<input type="text" id="text" name="text" value={selectedStatement?.tekst} class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
+									<input type="text" id="text" name="text" value={selectedStatement ? selectedStatement?.tekst : null} class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
 								</div>
 								{#await data.statistics}
 									<p>Awaiting data...</p>
@@ -265,6 +293,9 @@
 										</button>
 										<label for="hovedkategori" class="sr-only">Choose a main category</label>
 										<select id="hovedkategori" name="hovedkategori" class=" cursor-pointer text-sm rounded-e-lg border-s-neutral-700 border-s-2 block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
+											{#if !selectedStatement}
+												<option selected={true} value={null}></option>	
+											{/if}
 											{#if data.statistics}
 												{#each data.statistics.hovedkategorier as hovedkategori}
 													<option selected={selectedStatement?.hovedkategori === hovedkategori} value={hovedkategori}>{hovedkategori}</option>	
@@ -282,6 +313,9 @@
 										</button>
 										<label for="underkategori" class="sr-only">Choose a sub category</label>
 										<select id="underkategori" name="underkategori" class=" cursor-pointer text-sm rounded-e-lg border-s-neutral-700 border-s-2 block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
+											{#if !selectedStatement}
+												<option selected={true} value={null}></option>	
+											{/if}
 											{#if data.statistics}
 												{#each data.statistics.underkategorier as underkategori}
 													<option selected={selectedStatement?.underkategori === underkategori} value={underkategori}>{underkategori}</option>	
@@ -290,19 +324,86 @@
 										</select>
 									</div>
 								{/await}
-								<input class=" hidden" type="text" name="id" id="id" value={selectedStatements.length > 0 ? JSON.stringify(selectedStatements.flat()) : selectedStatement?.statementId}>
+								<input class=" hidden" type="text" name="id" id="id" value={selectedStatement ? selectedStatement?.statementId : JSON.stringify(selectedStatements.flat())}>
 							</div> 
 							<button type="submit" class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Confirm changes</button>
-							<button onclick={() => editStatementModal = false} type="button" class="  bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
+							<button onclick={() => [editStatementModal = false, selectedStatement = null]} type="button" class="  bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
 						</form>
 					</div>
 				{/if}
+				<!-- ------------------------------ -->
+				<!-- confirm delete statement modal -->
+				<!-- ------------------------------ -->
+				{#if confirmDeleteStatementModal}
+					<div class=" fixed w-screen h-screen top-0 left-0 flex justify-center items-center z-50">
+						<button onclick={() => addCategoryModal = false} aria-label="Closes the edit statement modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
+						{#await data.statistics}
+							<p>Awaiting data...</p>
+						{:then statistics}
+						<form class=" flex flex-col w-80 z-30 bg-neutral-800 h-48 relative rounded-md p-4">
+							<div class="flex justify-center w-full flex-col">
+								{#if selectedStatement}
+									<p class=" font-semibold">Confirm delete statement</p>
+									<p>You are about to delete a statement!</p>
+								{:else}
+									<p class=" font-semibold">Confirm delete statements</p>
+									<p>You are about to delete {selectedStatements.flat().length} statements!</p>
+								{/if}
+							</div> 
+							<button type="button" onclick={async (e) => {
+								if (selectedStatement) {
+									await fetch("/api/accountStatements/deleteStatement", {
+										method: "DELETE",
+										headers: {
+											'Content-Type': 'application/json'
+										},
+										body: JSON.stringify(selectedStatement?.statementId)
+									});
+									
+									if (data.accountStatements) {
+										const accountStatements = data.accountStatements.filter((dataStatement) => dataStatement.statementId !== selectedStatement?.statementId);
+										data = { ...data, accountStatements}
+									}
+								} else {
+									selectedStatements = selectedStatements.flat()
+									selectedStatements.forEach(async statement => {
+										await fetch("/api/accountStatements/deleteStatement", {
+											method: "DELETE",
+											headers: {
+												'Content-Type': 'application/json'
+											},
+											body: JSON.stringify(statement.statementId)
+										});
+									});
+	
+									if (data.accountStatements) {
+										const accountStatements = data.accountStatements.filter((dataStatement) => {
+											return selectedStatements.filter((selectedStatementFilter) => dataStatement.statementId === selectedStatementFilter.statementId).length === 0
+										});
+										data = { ...data, accountStatements}
+									}
+								}
+
+								selectedStatement = null
+								selectedStatements = []
+								confirmDeleteStatementModal = false
+							}}
+
+							class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Confirm delete</button>
+							<button onclick={() => [confirmDeleteStatementModal = false, selectedStatement = null]} type="button" class="  bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
+						</form>
+						{/await}
+					</div>
+				{/if}
+				<!-- --------------------------- -->
+				<!-- Table of account statements -->
+				<!-- --------------------------- -->
 				<div class=" rounded-xl bg-neutral-900 overflow-x-auto ">
 					<table class="w-full text-sm text-left rounded-4xl">
 						<thead class="text-xs uppercase bg-neutral-950  text-nowrap">
 							<tr>
 								<th scope="col" class="px-6 py-5">
-									<input bind:group={selectedStatements} value={accountStatements} type="checkbox" name="checkbox" id="checkbox"  class=" cursor-pointer w-4 h-4 text-blue-600 bg-neutral-700 border-neutral-600 rounded-sm focus:ring-0"/>
+									<input bind:group={selectedStatements} onchange={() => toggleAllCheckboxes()} checked={accountStatements.length === selectedStatements.length} type="checkbox" name="checkbox" id="checkbox"  class=" cursor-pointer w-4 h-4 text-blue-600 bg-neutral-700 border-neutral-600 rounded-sm focus:ring-0"/>
 								</th>
 								<th scope="col" class="px-6 py-5">
 									Date
@@ -323,35 +424,24 @@
 									Sub category
 								</th>
 								<td class="px-6 py-4">
-									<button onclick={() => [editStatementModal = true]} class=" flex text-nowrap font-bold cursor-pointer">. . .</button>
+									<button 
+										disabled={selectedStatements.length <= 0} 
+										onclick={() => [editStatementModal = true]} 
+										class=" flex text-nowrap font-bold cursor-pointer">. . .
+									</button>
 								</td>
 								<td class="px-6 py-4">
 									<button 
-										onclick={async (e) => {
-											selectedStatements = selectedStatements.flat()
-											selectedStatements.forEach(async statement => {
-												await fetch("/api/accountStatements/deleteStatement", {
-													method: "DELETE",
-													headers: {
-														'Content-Type': 'application/json'
-													},
-													body: JSON.stringify(statement.statementId)
-												});
-											});
-
-											 if (data.accountStatements) {
-												const accountStatements = data.accountStatements.filter((dataStatement) => {
-													return selectedStatements.filter((selectedStatementFilter) => dataStatement.statementId === selectedStatementFilter.statementId).length === 0
-												});
-												data = { ...data, accountStatements}
-											}
-										}}
-										class=" flex text-nowrap font-bold cursor-pointer">x</button>
+										disabled={selectedStatements.length <= 0}
+										onclick={() => confirmDeleteStatementModal = true}
+										class=" flex text-nowrap font-bold cursor-pointer">x
+									</button>
 								</td>
 							</tr>
 						</thead>
 						<tbody>
-							{#each accountStatements as statement}
+							{#if data.accountStatements !== undefined}
+							{#each data.accountStatements as statement}
 								<tr class=" border-b bg-neutral-900 border-neutral-800 text-xs text-neutral-400">
 									<th scope="col" class="px-6 py-5">
 										<input bind:group={selectedStatements} value={statement} type="checkbox" name="checkbox" id="checkbox" class=" cursor-pointer w-4 h-4 bg-neutral-700 border border-neutral-600 rounded-sm focus:ring-0"/>
@@ -379,24 +469,12 @@
 									</td>
 									<td class="px-6 py-4">
 										<button 
-											onclick={async (e) => {
-												await fetch("/api/accountStatements/deleteStatement", {
-													method: "DELETE",
-													headers: {
-														'Content-Type': 'application/json'
-													},
-													body: JSON.stringify(statement.statementId)
-												});
-
-												if (data.accountStatements) {
-													const accountStatements = data.accountStatements.filter((dataStatement) => dataStatement.statementId !== statement.statementId);
-													data = { ...data, accountStatements}
-												}
-											}} 
+											onclick={() => [confirmDeleteStatementModal = true, selectedStatement = statement]}
 											class=" flex text-nowrap font-bold cursor-pointer">x</button>
 									</td>
 								</tr>
 							{/each}
+							{/if}
 						</tbody>
 					</table>
 					<div>
