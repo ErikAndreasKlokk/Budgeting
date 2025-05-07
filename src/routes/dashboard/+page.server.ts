@@ -4,8 +4,7 @@ import { Readable } from 'node:stream';
 import Papa from 'papaparse';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
-import { desc, eq, sql } from 'drizzle-orm';
-import { stringify } from 'node:querystring';
+import { asc, desc, eq, sql } from 'drizzle-orm';
 
 interface csvBulderFormat {
     Dato: string,
@@ -33,9 +32,35 @@ export interface accountStatementFormat {
     underkategori: string | null
 }
 
+const columnMap = {
+  dato: table.accountStatements.dato,
+  innPaaKonto: table.accountStatements.innPaaKonto,
+  utFraKonto: table.accountStatements.utFraKonto,
+  tekst: table.accountStatements.tekst,
+  hovedkategori: table.accountStatements.hovedkategori,
+  underkategori: table.accountStatements.underkategori
+} as const;
+
+export type SortKey = keyof typeof columnMap;
+type SortDir = 'asc' | 'desc';
+
 export const load: PageServerLoad = async (event) => {
 
     if (!event.locals.user) return;
+
+    const url = event.url;
+    const sortBy = (url.searchParams.get('sortBy') as SortKey) ?? 'dato';
+    const sortDir = (url.searchParams.get('sortDir') as SortDir) ?? 'desc';
+    
+    const col = columnMap[sortBy]!;
+    let sortOrder;
+
+    if (sortBy === 'innPaaKonto' || sortBy === 'utFraKonto') {
+        const expr = sql`CAST(${col} AS numeric)`;
+        sortOrder = sortDir === 'asc' ? asc(expr) : desc(expr);
+    } else {
+        sortOrder = sortDir === 'asc' ? asc(col)  : desc(col);
+    }
 
     const accountStatements = db.select({
             statementId: table.accountStatements.id,
@@ -48,7 +73,7 @@ export const load: PageServerLoad = async (event) => {
             underkategori: table.accountStatements.underkategori
         }).from(table.accountStatements).where(eq(
             table.accountStatements.userId, event.locals.user.id, 
-        )).orderBy(desc(table.accountStatements.dato))
+        )).orderBy(sortOrder)
         
     const hovedkategorier: string[] = ["No category"]
     const underkategorier: string[] = ["No category"]

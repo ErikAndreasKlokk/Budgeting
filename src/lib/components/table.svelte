@@ -1,6 +1,7 @@
 <script lang="ts">
-	import type { accountStatementFormat } from "../../routes/dashboard/proxy+page.server";
+	import { type accountStatementFormat, type SortKey } from "../../routes/dashboard/proxy+page.server";
     import { enhance, applyAction  } from '$app/forms';
+	import { goto, invalidateAll } from "$app/navigation";
 
     const { accountStatements, statistics }: { accountStatements: accountStatementFormat[], statistics: any} = $props()
 
@@ -15,6 +16,21 @@
 
     let accountStatementsEditable = $state(accountStatements)
 
+    function updateSort(col: SortKey) {
+        const params = new URLSearchParams(window.location.search);
+
+        const currentBy  = params.get('sortBy');
+        const currentDir = params.get('sortDir');
+        const dir =
+            currentBy === col
+                ? (currentDir === 'asc' ? 'desc' : 'asc')
+                : 'desc';
+
+        params.set('sortBy', col);
+        params.set('sortDir', dir);
+
+        goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
+    }
 </script>
 
 <div>
@@ -94,7 +110,7 @@
                 }
             }}>
                 <div class="flex items-center justify-center w-full flex-col">
-                    <div class="relative z-0 w-full mb-5 group mt-2">
+                    <div class="relative z-0' w-full mb-5 group mt-2">
                         <label for="text" class="block mb-2 text-sm font-medium text-white">Text</label>
                         <input type="text" id="text" name="text" value={selectedStatement ? selectedStatement?.tekst : null} class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
                     </div>
@@ -205,7 +221,7 @@
     <!-- ------------ -->
     <div class=" mb-5">
         <div class=" flex w-full justify-between items-center">
-            <div class="relative z-0 w-80 mb-5 group mt-2">
+            <div class="relative -z-10 w-80 mb-5 group mt-2">
                 <label for="text" class="block mb-2 text-sm font-medium text-white">Search</label>
                 <input type="text" id="text" name="text" class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
             </div>
@@ -232,22 +248,22 @@
                     <th scope="col" class="px-6 py-5">
                         <input onchange={() => {if (accountStatementsEditable.length === selectedStatements.length) {selectedStatements = []} else {selectedStatements = accountStatementsEditable}}} checked={accountStatementsEditable.length === selectedStatements.length} type="checkbox" name="checkbox" id="checkbox"  class=" cursor-pointer w-4 h-4 text-blue-600 bg-neutral-700 border-neutral-600 rounded-sm focus:ring-0"/>
                     </th>
-                    <th scope="col" class="px-6 py-5">
+                    <th scope="col" class="px-6 py-5" onclick={() => updateSort("dato")}>
                         Date
                     </th>
-                    <th scope="col" class="px-6 py-5">
+                    <th scope="col" class="px-6 py-5" onclick={() => updateSort("innPaaKonto")}>
                         Money in (+)
                     </th>
-                    <th scope="col" class="px-6 py-5">
+                    <th scope="col" class="px-6 py-5" onclick={() => updateSort("utFraKonto")}>
                         Money out (-)
                     </th>
-                    <th scope="col" class="px-6 py-5">
+                    <th scope="col" class="px-6 py-5" onclick={() => updateSort("tekst")}>
                         Text
                     </th>
-                    <th scope="col" class="px-6 py-5">
+                    <th scope="col" class="px-6 py-5" onclick={() => updateSort("hovedkategori")}>
                         Main category
                     </th>
-                    <th scope="col" class="px-6 py-5">
+                    <th scope="col" class="px-6 py-5" onclick={() => updateSort("underkategori")}>
                         Sub category
                     </th>
                     <td class="px-6 py-4">
