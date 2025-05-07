@@ -209,17 +209,17 @@
                 <label for="text" class="block mb-2 text-sm font-medium text-white">Search</label>
                 <input type="text" id="text" name="text" class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
             </div>
-            <div class=" flex gap-3">
+            <!-- <div class=" flex gap-3">
                 <button class=" bg-neutral-700 cursor-pointer py-2.5 px-5 rounded-md text-sm font-semibold active:scale-95 flex gap-2 items-center hover:bg-neutral-600 border border-neutral-600">Date</button>
                 <button class=" bg-neutral-700 cursor-pointer py-2.5 px-5 rounded-md text-sm font-semibold active:scale-95 flex gap-2 items-center hover:bg-neutral-600 border border-neutral-600">Amount</button>
-            </div>
+            </div> -->
         </div>
         <div class=" flex w-full justify-between items-center">
             <p class=" text-xs text-neutral-400">Showing <span class=" font-bold text-neutral-200">{accountStatementsEditable.length}</span> account statements of <span class=" font-bold text-neutral-200">{accountStatements.length}</span></p>
-            <div class=" flex gap-2">
+            <!-- <div class=" flex gap-2">
                 <div class=" text-xs p-1 text-neutral-400 border border-neutral-600 font-medium  rounded-sm">Mar 18 2025 - Feb 17 2025 x</div>
                 <div class=" text-xs p-1 text-neutral-400 border border-neutral-600 font-medium  rounded-sm">0kr - 10000kr x</div>
-            </div>
+            </div> -->
         </div>
     </div>
     <!-- --------------------------- -->
