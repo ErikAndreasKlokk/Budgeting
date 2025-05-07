@@ -237,7 +237,6 @@ export const actions: Actions = {
         console.log(formIdJson)
 
         if (typeof formIdJson === "object") {
-            console.log("hei")
             formIdJson.map(async (statement) => {
                 await db.update(table.accountStatements).set({ 
                     tekst: formTekst ? formTekst : statement.tekst, 
@@ -249,7 +248,7 @@ export const actions: Actions = {
                 `).limit(1)
 
             })
-            return { formTekst: formTekst, formHovedkategori: formHovedkategori, formUnderkategori: formUnderkategori}
+            return { formTekst: formTekst, formHovedkategori: formHovedkategori, formUnderkategori: formUnderkategori, formId: JSON.stringify(formIdJson) }
         } else {
             await db.update(table.accountStatements).set({ 
                 tekst: formTekst, 
@@ -260,7 +259,7 @@ export const actions: Actions = {
                 and ${table.accountStatements.id} = ${Number(formIdJson)} 
             `).limit(1)
 
-            return { formTekst: formTekst, formHovedkategori: formHovedkategori, formUnderkategori: formUnderkategori}
+            return { formTekst: formTekst, formHovedkategori: formHovedkategori, formUnderkategori: formUnderkategori, formId: formId }
         }
 
     }
