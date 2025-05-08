@@ -258,7 +258,7 @@
                             disabled={selectedStatements.length <= 0} 
                             onclick={() => [editStatementModal = true]} 
                             class=" flex text-nowrap font-bold cursor-pointer">
-                            <Edit size="small" color="neutral"/>
+                            <Edit size="small" color={selectedStatements.length <= 0 ? "darkNeutral" : "neutral"}/>
                         </button>
                     </td>
                     <td class="px-6 py-4">
@@ -266,7 +266,7 @@
                             disabled={selectedStatements.length <= 0}
                             onclick={() => confirmDeleteStatementModal = true}
                             class=" flex text-nowrap font-bold cursor-pointer">
-                            <Delete color="neutral" size="small"/>
+                            <Delete color={selectedStatements.length <= 0 ? "darkNeutral" : "neutral"} size="small"/>
                         </button>
                     </td>
                 </tr>
