@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { accountStatementFormat } from "../../routes/dashboard/proxy+page.server";
     import { enhance, applyAction  } from '$app/forms';
+	import Edit from "./icons/edit.svelte";
+	import Delete from "./icons/delete.svelte";
+	import Search from "./icons/search.svelte";
 
     const { accountStatements, statistics }: { accountStatements: accountStatementFormat[], statistics: any} = $props()
 
@@ -170,12 +173,10 @@
                             },
                             body: JSON.stringify(selectedStatement?.statementId)
                         });
-                        
                         accountStatementsEditable = [...accountStatements.filter((statement) => statement.statementId !== selectedStatement?.statementId)]
-                        
                     } else {
                         selectedStatements = selectedStatements.flat()
-                        selectedStatements.forEach(async statement => {
+                        selectedStatements.map(async statement => {
                             await fetch("/api/accountStatements/deleteStatement", {
                                 method: "DELETE",
                                 headers: {
@@ -184,7 +185,6 @@
                                 body: JSON.stringify(statement.statementId)
                             });
                         });
-
                         accountStatementsEditable = [...accountStatements.filter((dataStatement) => {
                             return selectedStatements.filter((selectedStatementFilter) => dataStatement.statementId === selectedStatementFilter.statementId).length === 0
                         })]
@@ -205,9 +205,12 @@
     <!-- ------------ -->
     <div class=" mb-5">
         <div class=" flex w-full justify-between items-center">
-            <div class="relative z-0 w-80 mb-5 group mt-2">
-                <label for="text" class="block mb-2 text-sm font-medium text-white">Search</label>
-                <input type="text" id="text" name="text" class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
+            <div class=" w-80 mb-5 group mt-2">
+                <label for="text" class="mb-2 text-sm font-medium text-white flex gap-1">
+                    <Search />
+                    Search
+                </label>
+                <input type="text" id="text" name="text" class=" text-sm rounded-lg w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
             </div>
             <!-- <div class=" flex gap-3">
                 <button class=" bg-neutral-700 cursor-pointer py-2.5 px-5 rounded-md text-sm font-semibold active:scale-95 flex gap-2 items-center hover:bg-neutral-600 border border-neutral-600">Date</button>
@@ -236,10 +239,10 @@
                         Date
                     </th>
                     <th scope="col" class="px-6 py-5">
-                        Money in (+)
+                        Money in
                     </th>
                     <th scope="col" class="px-6 py-5">
-                        Money out (-)
+                        Money out
                     </th>
                     <th scope="col" class="px-6 py-5">
                         Text
@@ -254,14 +257,16 @@
                         <button 
                             disabled={selectedStatements.length <= 0} 
                             onclick={() => [editStatementModal = true]} 
-                            class=" flex text-nowrap font-bold cursor-pointer">. . .
+                            class=" flex text-nowrap font-bold cursor-pointer">
+                            <Edit size="small" color="neutral"/>
                         </button>
                     </td>
                     <td class="px-6 py-4">
                         <button 
                             disabled={selectedStatements.length <= 0}
                             onclick={() => confirmDeleteStatementModal = true}
-                            class=" flex text-nowrap font-bold cursor-pointer">x
+                            class=" flex text-nowrap font-bold cursor-pointer">
+                            <Delete color="neutral" size="small"/>
                         </button>
                     </td>
                 </tr>
@@ -291,12 +296,16 @@
                             {statement.underkategori}
                         </td>
                         <td class="px-6 py-4">
-                            <button onclick={() => [editStatementModal = true, selectedStatement = statement]} class=" flex text-nowrap font-bold cursor-pointer">. . .</button>
+                            <button onclick={() => [editStatementModal = true, selectedStatement = statement]} class=" flex text-nowrap font-bold cursor-pointer">
+                                <Edit color="darkNeutral" size="small" />
+                            </button>
                         </td>
                         <td class="px-6 py-4">
                             <button 
                                 onclick={() => [confirmDeleteStatementModal = true, selectedStatement = statement]}
-                                class=" flex text-nowrap font-bold cursor-pointer">x</button>
+                                class=" flex text-nowrap font-bold cursor-pointer">
+                                <Delete color="darkNeutral" size="small"/>
+                            </button>
                         </td>
                     </tr>
                 {/each}

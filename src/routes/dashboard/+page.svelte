@@ -5,8 +5,12 @@
 	import type { ActionData } from './$types';
 	import { Arc, Chart, Group, LinearGradient, Pie, Svg, Tooltip, Text } from 'layerchart';
 	import Table from '$lib/components/table.svelte';
+	import CloudUpload from '$lib/components/icons/cloudUpload.svelte';
+	import ArrowDown from '$lib/components/icons/arrowDown.svelte';
+	import Leaderboard from '$lib/components/icons/leaderboard.svelte';
 
 	let uploadModal = $state(false)
+	let file: FileList | null | undefined = $state(null)
 	
 	let { data, form }: {data: PageServerData, form: ActionData} = $props();
 	
@@ -43,9 +47,7 @@
 			<p class=" text-4xl font-bold ">Dashboard</p>
 			<button onclick={() => uploadModal = true} class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 flex gap-2 items-center hover:bg-blue-800">
 				Upload account statement
-				<svg class="w-5 h-5 text-neutral-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-					<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
-				</svg>
+				<CloudUpload />
 			</button>
 			<!-- ---------------- -->
 			<!-- Upload csv modal -->
@@ -74,17 +76,19 @@
 						<div class="flex items-center justify-center w-full">
 							<label for="csv" class="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:bg-neutral-700 bg-neutral-600 border-neutral-500 hover:border-neutral-400">
 								<div class="flex flex-col items-center justify-center pt-5 pb-6">
-									<svg class="w-8 h-8 mb-4 text-neutral-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-										<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
-									</svg>
-									<p class="mb-2 text-sm "><span class="font-semibold">Click to upload</span> or drag and drop</p>
-									<p class="text-xs ">CSV files only</p>
+									{#if file?.length !== 0 && file}
+										<p>File "{file[0].name}" selected!</p>
+									{:else}
+										<CloudUpload size="medium" />
+										<p class="my-2 text-sm "><span class="font-semibold">Click to upload</span> or drag and drop</p>
+										<p class="text-xs ">CSV files only</p>
+									{/if}
 								</div>
-								<input id="csv" type="file"  name="csv" class="hidden" accept=".csv" required={true} />
+								<input bind:files={file} id="csv" type="file"  name="csv" class="hidden" accept=".csv" required={true} />
 							</label>
 						</div> 
 						<button type="submit" class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Upload file</button>
-						<button onclick={() => uploadModal = false} type="button" class="  bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
+						<button onclick={() => [uploadModal = false, file = null]} type="button" class="  bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
 					</form>
 				</div>
 			{/if}
@@ -96,7 +100,10 @@
 			<div class=" w-full rounded-2xl h-[600px] bg-neutral-900 flex flex-col p-10">
 				<div class=" mb-9">
 					<p class=" text-4xl font-bold ">Money spent</p>
-					<p class=" italic text-neutral-400">The last 30 days</p>
+					<button class=" flex items-center text-neutral-400 italic cursor-pointer mt-1">
+						Feb 2025 - Mar 2025
+						<ArrowDown color="darkNeutral"/>
+					</button>
 				</div>
 				{#await data.statistics}
 					<p>Awaiting data...</p>
@@ -120,8 +127,11 @@
 							</Chart>
 							<p class=" absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-bold text-2xl ">{statistics?.moneyOut.toFixed(0)} kr</p>
 						</div>
-						<div class=" h-[200px] flex flex-col items-center">
-							<p class="text-2xl w-full font-bold">Top 3 categories</p>
+						<div class=" h-[200px] flex flex-col">
+							<div class=" flex items-center gap-2 ">
+								<Leaderboard  size="medium"/>
+								<p class="text-2xl font-bold">Top 3 categories</p> 
+							</div>
 							<div class=" flex mt-6 w-full justify-between">
 								<ol>
 									<li>1. {statistics?.kategoriData?.sort((a, b) => b?.moneyOut - a?.moneyOut)[0]?.hovedkategori}</li>
@@ -144,7 +154,10 @@
 			<div class=" w-full rounded-2xl h-[600px] bg-neutral-900 flex flex-col p-10">
 				<div class=" mb-9">
 					<p class=" text-4xl font-bold ">Money earned</p>
-					<p class=" italic text-neutral-400">The last 30 days</p>
+					<button class=" flex items-center text-neutral-400 italic cursor-pointer mt-1">
+						Feb 2025 - Mar 2025
+						<ArrowDown color="darkNeutral"/>
+					</button>
 				</div>
 				{#await data.statistics}
 					<p>Awaiting data...</p>
@@ -173,7 +186,10 @@
 							</div>
 						</div>
 						<div class=" h-[200px] flex flex-col">
-							<p class="text-2xl w-full font-bold">Top 3 categories</p>
+							<div class=" flex items-center gap-2 ">
+								<Leaderboard  size="medium"/>
+								<p class="text-2xl font-bold">Top 3 categories</p> 
+							</div>
 							<div class=" flex mt-6 w-full justify-between">
 								<ol>
 									<li>1. {statistics?.kategoriData?.sort((a, b) => b?.moneyIn - a?.moneyIn)[0]?.hovedkategori}</li>
