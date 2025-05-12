@@ -9,6 +9,7 @@
 	import ArrowDown from "./icons/arrowDown.svelte";
 	import ArrowUp from "./icons/arrowUp.svelte";
 	import { onMount } from "svelte";
+	import Calendar from "./icons/calendar.svelte";
 
     const { accountStatements, statistics }: { accountStatements: accountStatementFormat[], statistics: any} = $props()
 
@@ -26,10 +27,12 @@
 
     let currentSortParam = $state();
     let currentDirParam = $state();
+    let searchValue = $state()
 
     onMount(() => {
         currentSortParam = new URLSearchParams(window.location.search).get("sortBy")
         currentDirParam = new URLSearchParams(window.location.search).get("sortDir")
+        searchValue = new URLSearchParams(window.location.search).get("search")
     })
 
     function updateSort(col: SortKey) {
@@ -45,6 +48,12 @@
         goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
         currentSortParam = col
         currentDirParam = dir
+    }
+
+    function searchFunc(searchParam: string) {
+        const params = new URLSearchParams(window.location.search);
+        params.set('search', searchParam);
+        goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
     }
 
 </script>
@@ -63,6 +72,8 @@
                         editStatementModal = false
                         selectedStatement = null
                         selectedStatements = []
+                        mainCategoryValue = ""
+                        subCategoryValue = ""
                         invalidateAll()
                     }
 
@@ -115,7 +126,7 @@
     {#if confirmDeleteStatementModal}
         <div class=" fixed w-screen h-screen top-0 left-0 flex justify-center items-center z-50">
             <button onclick={() => [confirmDeleteStatementModal = false, selectedStatement = null]} aria-label="Closes the edit statement modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
-            <form class=" flex flex-col w-80 z-30 bg-neutral-800 h-48 relative rounded-md p-4">
+            <div class=" flex flex-col w-80 z-30 bg-neutral-800 h-48 relative rounded-md p-4">
                 <div class="flex justify-center w-full flex-col">
                     {#if selectedStatement}
                         <p class=" font-semibold text-lg mb-1">Confirm delete statement</p>
@@ -125,7 +136,7 @@
                         <p>You are about to delete <span class=" font-bold underline">{selectedStatements.length}</span> statements!</p>
                     {/if}
                 </div>
-                <button type="button" onclick={async (e) => {
+                <button type="submit" onclick={async (e) => {
                     if (selectedStatement) {
                         await fetch("/api/accountStatements/deleteStatement", {
                             method: "DELETE",
@@ -149,35 +160,36 @@
                     confirmDeleteStatementModal = false
                     invalidateAll()
                 }}
-
                 class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Confirm delete</button>
                 <button onclick={() => [confirmDeleteStatementModal = false, selectedStatement = null]} type="button" class="  bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
-            </form>
+            </div>
         </div>
     {/if}
     <!-- ------------ -->
     <!-- Table filter -->
     <!-- ------------ -->
     <div class=" mb-5">
-        <div class=" flex w-full justify-between items-center">
-            <div class=" w-80 mb-5 group mt-2">
-                <label for="text" class="mb-2 text-sm font-medium text-white flex gap-1">
-                    <Search />
-                    Search
-                </label>
-                <input type="text" id="text" name="text" class=" text-sm rounded-lg w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
+        <div class=" w-full">
+            <div class=" w-full flex justify-between">
+                <div class=" w-80 mb-5 group mt-2">
+                    <label for="search" class="mb-2 text-sm font-medium text-white flex gap-1">
+                        <Search />
+                        Search
+                    </label>
+                    <div class=" flex">
+                        <input bind:value={searchValue} type="text" id="search" name="search" class=" text-sm rounded-l-lg w-full p-2.5 bg-neutral-700 border border-neutral-600 placeholder-neutral-400 focus:ring-blue-500 focus:border-blue-500">
+                        <button onclick={() => searchFunc(searchValue)} class=" text-sm rounded-r-lg p-2.5 bg-neutral-700 border border-neutral-600 cursor-pointer"><Search /></button>
+                    </div>
+                </div>
+                <div class=" w-60 mb-5 group mt-2">
+                    <label for="text" class="mb-2 text-sm font-medium text-white flex gap-1">
+                        <Calendar />
+                        Pick Date
+                    </label>
+                    <input disabled={true} type="text" id="text" name="text" class=" text-sm rounded-lg w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
+                </div>
             </div>
-            <!-- <div class=" flex gap-3">
-                <button class=" bg-neutral-700 cursor-pointer py-2.5 px-5 rounded-md text-sm font-semibold active:scale-95 flex gap-2 items-center hover:bg-neutral-600 border border-neutral-600">Date</button>
-                <button class=" bg-neutral-700 cursor-pointer py-2.5 px-5 rounded-md text-sm font-semibold active:scale-95 flex gap-2 items-center hover:bg-neutral-600 border border-neutral-600">Amount</button>
-            </div> -->
-        </div>
-        <div class=" flex w-full justify-between items-center">
             <p class=" text-xs text-neutral-400">Showing <span class=" font-bold text-neutral-200">{accountStatements.length}</span> account statements of <span class=" font-bold text-neutral-200">{accountStatements.length}</span></p>
-            <!-- <div class=" flex gap-2">
-                <div class=" text-xs p-1 text-neutral-400 border border-neutral-600 font-medium  rounded-sm">Mar 18 2025 - Feb 17 2025 x</div>
-                <div class=" text-xs p-1 text-neutral-400 border border-neutral-600 font-medium  rounded-sm">0kr - 10000kr x</div>
-            </div> -->
         </div>
     </div>
     <!-- --------------------------- -->

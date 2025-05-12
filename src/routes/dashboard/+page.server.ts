@@ -4,7 +4,7 @@ import { Readable } from 'node:stream';
 import Papa from 'papaparse';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
-import { desc, eq, sql, asc } from 'drizzle-orm';
+import { desc, eq, sql, asc, and, or } from 'drizzle-orm';
 
 interface csvBulderFormat {
     Dato: string,
@@ -17,7 +17,7 @@ interface csvBulderFormat {
     Type: string | null,
     Tekst: string | null,
     KID: string | null,
-    Hovedkategori: string | null, 
+    Hovedkategori: string | null,
     Underkategori: string | null
 }
 
@@ -30,6 +30,18 @@ export interface accountStatementFormat {
     tekst: string | null,
     hovedkategori: string | null,
     underkategori: string | null
+}
+
+interface categoryDataType {
+    hovedkategori: string;
+    underkategorier: {
+        underkategori: string | null;
+        statements: accountStatementFormat[];
+        moneyIn: number; moneyOut: number;
+    }[];
+    statements: accountStatementFormat[];
+    moneyIn: number;
+    moneyOut: number;
 }
 
 const columnMap = {
@@ -51,6 +63,7 @@ export const load: PageServerLoad = async (event) => {
     const url = event.url;
     const sortBy = (url.searchParams.get('sortBy') as SortKey) ?? 'dato';
     const sortDir = (url.searchParams.get('sortDir') as SortDir) ?? 'desc';
+    const search = url.searchParams.get('search') ?? null;
 
     const col = columnMap[sortBy]!;
     let sortOrder;
@@ -59,41 +72,60 @@ export const load: PageServerLoad = async (event) => {
         const expr = sql`CAST(${col} AS numeric)`;
         sortOrder = sortDir === 'asc' ? asc(expr) : desc(expr);
     } else {
-        sortOrder = sortDir === 'asc' ? asc(col)  : desc(col);
+        sortOrder = sortDir === 'asc' ? asc(col) : desc(col);
     }
 
     const accountStatements = db.select({
-            statementId: table.accountStatements.id,
-            dato: table.accountStatements.dato,
-            innPaaKonto: table.accountStatements.innPaaKonto,
-            utFraKonto: table.accountStatements.utFraKonto,
-            type: table.accountStatements.type,
-            tekst: table.accountStatements.tekst,
-            hovedkategori: table.accountStatements.hovedkategori,
-            underkategori: table.accountStatements.underkategori
-        }).from(table.accountStatements).where(eq(
-            table.accountStatements.userId, event.locals.user.id, 
-        )).orderBy(sortOrder)
-        
-    const hovedkategorier: string[] = ["No category"]
-    const underkategorier: string[] = ["No category"]
-    let kategoriData: { 
-        hovedkategori: string; 
-        underkategorier: { 
-            underkategori: string | null; 
-            statements: accountStatementFormat[]; 
-            moneyIn: number; moneyOut: number; 
-        }[]; 
-        statements: accountStatementFormat[]; 
-        moneyIn: number; 
-        moneyOut: number; 
-    }[] = []
+        statementId: table.accountStatements.id,
+        dato: table.accountStatements.dato,
+        innPaaKonto: table.accountStatements.innPaaKonto,
+        utFraKonto: table.accountStatements.utFraKonto,
+        type: table.accountStatements.type,
+        tekst: table.accountStatements.tekst,
+        hovedkategori: table.accountStatements.hovedkategori,
+        underkategori: table.accountStatements.underkategori
+    })
+        .from(table.accountStatements)
+        .where(
+            search ?
+                and(
+                    eq(table.accountStatements.userId, event.locals.user.id),
+                    or(
+                        sql`LOWER(${table.accountStatements.dato}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.innPaaKonto}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.utFraKonto}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.tekst}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.hovedkategori}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.underkategori}) LIKE LOWER(${`%${search}%`})`
+                    )
+                )
+                :
+                eq(table.accountStatements.userId, event.locals.user.id)
+        )
+        .orderBy(sortOrder);
+
+    const hovedkategorier: string[] = []
+    const underkategorier: string[] = []
+    let kategoriData: categoryDataType[] = []
+
+    const accountStatementsStatistics = db.select({
+        statementId: table.accountStatements.id,
+        dato: table.accountStatements.dato,
+        innPaaKonto: table.accountStatements.innPaaKonto,
+        utFraKonto: table.accountStatements.utFraKonto,
+        type: table.accountStatements.type,
+        tekst: table.accountStatements.tekst,
+        hovedkategori: table.accountStatements.hovedkategori,
+        underkategori: table.accountStatements.underkategori
+    })
+    .from(table.accountStatements)
+    .where(eq(table.accountStatements.userId, event.locals.user.id));
 
     async function createStatistics() {
         let moneyIn = 0;
         let moneyOut = 0;
 
-        (await accountStatements).map((statement) => {
+        (await accountStatementsStatistics).map((statement) => {
             moneyIn += Number(statement.innPaaKonto?.replace(",", "."))
             moneyOut += Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
 
@@ -155,29 +187,20 @@ export const load: PageServerLoad = async (event) => {
             }
 
 
-        }) 
+        })
 
-        return { 
-            moneyIn: moneyIn, 
-            moneyOut: moneyOut, 
+        return {
+            moneyIn: moneyIn,
+            moneyOut: moneyOut,
             hovedkategorier: hovedkategorier,
             underkategorier: underkategorier,
             kategoriData: kategoriData
         }
     }
 
-    async function prettierAccountStatements() {
-        return (await accountStatements).map((statement) => {
-            if (statement.hovedkategori === "No category") statement.hovedkategori = null;
-            if (statement.underkategori === "No category") statement.underkategori = null;
-
-            return statement;
-        })
-    }
-
-    return { 
-        user: event.locals.user, 
-        accountStatements: await prettierAccountStatements(), 
+    return {
+        user: event.locals.user,
+        accountStatements: await accountStatements,
         statistics: await createStatistics()
     };
 };
@@ -188,10 +211,10 @@ export const actions: Actions = {
         const csv = formData.get('csv');
 
         if (typeof csv !== "object" || !csv) {
-            return fail(400, { csv, missing: true})
+            return fail(400, { csv, missing: true })
         }
         if (!event.locals.user?.id || !event.locals.session) {
-            return fail(401, { incorrect: true})
+            return fail(401, { incorrect: true })
         }
 
         const file = await csv.arrayBuffer();
@@ -202,9 +225,9 @@ export const actions: Actions = {
             try {
                 if (!event.locals.user?.id) return;
 
-                if(!line.Dato) return fail(400, { message: "Atleast one line in the file is missing a date"});
-                
-                const accountStatement = await db.select({ 
+                if (!line.Dato) return fail(400, { message: "Atleast one line in the file is missing a date" });
+
+                const accountStatement = await db.select({
                     dato: table.accountStatements.dato
                 }).from(table.accountStatements).where(sql`
                     ${table.accountStatements.userId}             = ${event.locals.user.id}
@@ -218,22 +241,24 @@ export const actions: Actions = {
                     and ${table.accountStatements.type}           = ${line.Type}
                     and ${table.accountStatements.kid}            = ${line.KID}
                 `).limit(1);
-                    
-                if (accountStatement.length !== 0) return;
+                
+
+                /* TODO: fix duplicate statements */
+                /* if (accountStatement.length !== 0) return; */
 
                 if (!line.Hovedkategori || line.Hovedkategori.trim() === "") line.Hovedkategori = "No category";
                 if (!line.Underkategori || line.Underkategori.trim() === "") line.Underkategori = "No category";
 
-                await db.insert(table.accountStatements).values({ 
-                    userId: event.locals.user.id, 
-                    dato: line.Dato, 
+                await db.insert(table.accountStatements).values({
+                    userId: event.locals.user.id,
+                    dato: line.Dato,
                     innPaaKonto: line['Inn på konto'],
                     utFraKonto: line['Ut fra konto'],
                     tilKonto: line['Til konto'],
                     tilKontonummer: line['Til kontonummer'],
                     fraKonto: line['Fra konto'],
                     fraKontonummer: line['Fra kontonummer'],
-                    type: line.Type, 
+                    type: line.Type,
                     tekst: line.Tekst,
                     kid: line.KID,
                     hovedkategori: line.Hovedkategori,
@@ -252,13 +277,13 @@ export const actions: Actions = {
         const formId = formData.get("id") as string
         const formIdJson = JSON.parse(formId) as Array<accountStatementFormat>
 
-        if(!event.locals.user || !event.locals.session) return fail(401, { message: "Unauthorized request" });
+        if (!event.locals.user || !event.locals.session) return fail(401, { message: "Unauthorized request" });
 
         if (typeof formIdJson === "object") {
             formIdJson.map(async (statement) => {
-                await db.update(table.accountStatements).set({ 
+                await db.update(table.accountStatements).set({
                     tekst: formTekst ? formTekst : statement.tekst,
-                    hovedkategori: formHovedkategori ? formHovedkategori : statement.hovedkategori, 
+                    hovedkategori: formHovedkategori ? formHovedkategori : statement.hovedkategori,
                     underkategori: formUnderkategori ? formUnderkategori : statement.underkategori
                 }).where(sql`
                     ${table.accountStatements.userId} = ${event.locals.user?.id}
@@ -267,9 +292,9 @@ export const actions: Actions = {
             })
             return { formTekst: formTekst, formHovedkategori: formHovedkategori, formUnderkategori: formUnderkategori, formId: JSON.stringify(formIdJson) }
         } else {
-            await db.update(table.accountStatements).set({ 
+            await db.update(table.accountStatements).set({
                 tekst: formTekst,
-                hovedkategori: formHovedkategori, 
+                hovedkategori: formHovedkategori,
                 underkategori: formUnderkategori
             }).where(sql`
                 ${table.accountStatements.userId} = ${event.locals.user.id}
@@ -283,6 +308,6 @@ export const actions: Actions = {
 
 const parseCSV = (stream: Readable): Promise<Array<csvBulderFormat>> => {
     return new Promise((resolve) => {
-        Papa.parse(stream, { header: true, encoding: "utf-8", delimiter: ";", complete: (results) => {resolve(results.data as Array<csvBulderFormat>)}});
+        Papa.parse(stream, { header: true, encoding: "utf-8", delimiter: ";", complete: (results) => { resolve(results.data as Array<csvBulderFormat>) } });
     });
 };
