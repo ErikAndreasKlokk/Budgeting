@@ -8,6 +8,7 @@
 	import CloudUpload from '$lib/components/icons/cloudUpload.svelte';
 	import ArrowDown from '$lib/components/icons/arrowDown.svelte';
 	import Leaderboard from '$lib/components/icons/leaderboard.svelte';
+	import { invalidateAll } from '$app/navigation';
 
 	let uploadModal = $state(false)
 	let file: FileList | null | undefined = $state(null)
@@ -64,10 +65,10 @@
 					<form method="post" action="?/uploadCsv" class=" flex flex-col w-80 z-30 bg-neutral-800 h-96 relative rounded-md p-4" enctype="multipart/form-data" 
 					use:enhance={({}) => {
 						return async ({ result }) => {
-	
 							if (result.type === "success") {
-								uploadModal = false
-								location.reload()
+								uploadModal = false;
+								file = null;
+								invalidateAll();
 							}
 	
 							await applyAction(result);
@@ -93,21 +94,21 @@
 				</div>
 			{/if}
 		</div>
-		<!-- ---------------- -->
-		<!-- Money spent card -->
-		<!-- ---------------- -->
-		<div class=" flex justify-evenly w-full gap-20">
-			<div class=" w-full rounded-2xl h-[600px] bg-neutral-900 flex flex-col p-10">
-				<div class=" mb-9">
-					<p class=" text-4xl font-bold ">Money spent</p>
-					<button class=" flex items-center text-neutral-400 italic cursor-pointer mt-1">
-						Feb 2025 - Mar 2025
-						<ArrowDown color="darkNeutral"/>
-					</button>
-				</div>
-				{#await data.statistics}
-					<p>Awaiting data...</p>
-				{:then statistics} 
+		{#await data.statistics}
+			<p>Awaiting data...</p>
+		{:then statistics} 
+			<div class=" flex justify-evenly w-full gap-20">
+				<!-- ---------------- -->
+				<!-- Money spent card -->
+				<!-- ---------------- -->
+				<div class=" w-full rounded-2xl h-[600px] bg-neutral-900 flex flex-col p-10">
+					<div class=" mb-9">
+						<p class=" text-4xl font-bold ">Money spent</p>
+						<button class=" flex items-center text-neutral-400 italic cursor-pointer mt-1">
+							Feb 2025 - Mar 2025
+							<ArrowDown color="darkNeutral"/>
+						</button>
+					</div>
 					{#if statistics?.kategoriData.length !== 0}
 						<div class="h-[300px] p-4 overflow-auto relative w-full mb-9">
 							<Chart data={statistics?.kategoriData} x="moneyOut" c="hovedkategori" cRange={keyColors} let:tooltip>
@@ -146,22 +147,18 @@
 							</div>
 						</div>
 					{/if}
-				{/await}
-			</div>
-			<!-- ----------------- -->
-			<!-- Money earned card -->
-			<!-- ----------------- -->
-			<div class=" w-full rounded-2xl h-[600px] bg-neutral-900 flex flex-col p-10">
-				<div class=" mb-9">
-					<p class=" text-4xl font-bold ">Money earned</p>
-					<button class=" flex items-center text-neutral-400 italic cursor-pointer mt-1">
-						Feb 2025 - Mar 2025
-						<ArrowDown color="darkNeutral"/>
-					</button>
 				</div>
-				{#await data.statistics}
-					<p>Awaiting data...</p>
-				{:then statistics}
+				<!-- ----------------- -->
+				<!-- Money earned card -->
+				<!-- ----------------- -->
+				<div class=" w-full rounded-2xl h-[600px] bg-neutral-900 flex flex-col p-10">
+					<div class=" mb-9">
+						<p class=" text-4xl font-bold ">Money earned</p>
+						<button class=" flex items-center text-neutral-400 italic cursor-pointer mt-1">
+							Feb 2025 - Mar 2025
+							<ArrowDown color="darkNeutral"/>
+						</button>
+					</div>
 					{#if statistics?.kategoriData.length !== 0 && statistics?.moneyIn !== undefined && statistics?.moneyOut !== undefined}
 						<div class="h-[300px] p-4 relative w-full mb-9 overflow-hidden">
 							<Chart data={[{value: statistics?.moneyIn - statistics?.moneyOut, label: "Money left to spend"}, {value: statistics?.moneyOut, label: "Money spent"}]} x="value" c="value" cRange={statistics?.moneyIn - statistics?.moneyOut < 0 ? ["#320801", "#ff2222"] : ["#013220", "#00B86B"]} let:tooltip>
@@ -204,12 +201,12 @@
 							</div>
 						</div>
 					{/if}
-				{/await}
+				</div>
 			</div>
-		</div>
+		{/await}
+			
 
-
-<!-- ----------------------------------------------------------------------------------------------------------- -->
+	<!-- ----------------------------------------------------------------------------------------------------------- -->
 
 
 		{#await data.accountStatements}

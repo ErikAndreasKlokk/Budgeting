@@ -64,11 +64,11 @@ export const load: PageServerLoad = async (event) => {
         moneyOut: number; 
     }[] = []
 
-    function createStatistics(accountStatements: Array<accountStatementFormat>) {
-        let moneyIn = 0
-        let moneyOut = 0
+    async function createStatistics() {
+        let moneyIn = 0;
+        let moneyOut = 0;
 
-        accountStatements.map((statement) => {
+        (await accountStatements).map((statement) => {
             moneyIn += Number(statement.innPaaKonto?.replace(",", "."))
             moneyOut += Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
 
@@ -141,22 +141,19 @@ export const load: PageServerLoad = async (event) => {
         }
     }
 
-    function prettierAccountStatements(accountStatements: Array<accountStatementFormat>) {
-
-        const accountStatements2 = accountStatements.map((statement) => {
+    async function prettierAccountStatements() {
+        return (await accountStatements).map((statement) => {
             if (statement.hovedkategori === "No category") statement.hovedkategori = null;
             if (statement.underkategori === "No category") statement.underkategori = null;
 
             return statement;
         })
-
-        return accountStatements2
     }
 
     return { 
         user: event.locals.user, 
-        accountStatements: prettierAccountStatements(await accountStatements), 
-        statistics: createStatistics(await accountStatements)
+        accountStatements: await prettierAccountStatements(), 
+        statistics: await createStatistics()
     };
 };
 
@@ -234,24 +231,21 @@ export const actions: Actions = {
 
         if(!event.locals.user || !event.locals.session) return fail(401, { message: "Unauthorized request" });
 
-        console.log(formIdJson)
-
         if (typeof formIdJson === "object") {
             formIdJson.map(async (statement) => {
                 await db.update(table.accountStatements).set({ 
-                    tekst: formTekst ? formTekst : statement.tekst, 
+                    tekst: formTekst ? formTekst : statement.tekst,
                     hovedkategori: formHovedkategori ? formHovedkategori : statement.hovedkategori, 
                     underkategori: formUnderkategori ? formUnderkategori : statement.underkategori
                 }).where(sql`
-                    ${table.accountStatements.userId} = ${event.locals.user.id}
+                    ${table.accountStatements.userId} = ${event.locals.user?.id}
                     and ${table.accountStatements.id} = ${Number(statement.statementId)} 
                 `).limit(1)
-
             })
             return { formTekst: formTekst, formHovedkategori: formHovedkategori, formUnderkategori: formUnderkategori, formId: JSON.stringify(formIdJson) }
         } else {
             await db.update(table.accountStatements).set({ 
-                tekst: formTekst, 
+                tekst: formTekst,
                 hovedkategori: formHovedkategori, 
                 underkategori: formUnderkategori
             }).where(sql`
@@ -261,7 +255,6 @@ export const actions: Actions = {
 
             return { formTekst: formTekst, formHovedkategori: formHovedkategori, formUnderkategori: formUnderkategori, formId: formId }
         }
-
     }
 } satisfies Actions;
 

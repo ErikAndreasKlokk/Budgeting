@@ -4,147 +4,81 @@
 	import Edit from "./icons/edit.svelte";
 	import Delete from "./icons/delete.svelte";
 	import Search from "./icons/search.svelte";
+	import { invalidateAll } from "$app/navigation";
+	import { clickOutside } from "svelte-outside";
 
     const { accountStatements, statistics }: { accountStatements: accountStatementFormat[], statistics: any} = $props()
 
     let editStatementModal = $state(false)
-	let addCategoryModal = $state(false)
-	let addCategoryValue = $state("")
-	let isMainCategory = $state(false)
 	let confirmDeleteStatementModal = $state(false)
 
+    let mainCategoryValue: string | null = $state(null)
+    let mainCategoryFocused = $state(false)
+
+    let subCategoryValue: string | null  = $state(null)
+    let subCategoryFocused = $state(false)
+
 	let selectedStatement: accountStatementFormat | null = $state(null)
-	let selectedStatements: accountStatementFormat[] = $state([])
-
-    let accountStatementsEditable = $state(accountStatements)
-
+	let selectedStatements: number[] = $state([])
 </script>
 
 <div>
-    <!-- ------------------ -->
-    <!-- add category modal -->
-    <!-- ------------------ -->
-    {#if addCategoryModal}
-        <div class=" fixed w-screen h-screen top-0 left-0 flex justify-center items-center z-50">
-            <button onclick={() => addCategoryModal = false} aria-label="Closes the edit statement modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
-            <form class=" flex flex-col w-80 z-30 bg-neutral-800 h-96 relative rounded-md p-4">
-                <div class="flex items-center justify-center w-full flex-col">
-
-                    <div class="relative z-0 w-full mb-5 group mt-2">
-                        <label for="text" class="block mb-2 text-sm font-medium text-white">Add {isMainCategory ? "main" : "sub"} category</label>
-                        <input type="text" bind:value={addCategoryValue} id="text" name="text" class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                </div> 
-                <button type="button" onclick={() => {
-                    if (isMainCategory && statistics) {
-                        statistics.hovedkategorier.push(addCategoryValue)
-                    } else {
-                        if (statistics) {
-                            statistics.underkategorier.push(addCategoryValue)
-                        }
-                    }
-
-                    addCategoryModal = false
-                }} 
-                class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Add category</button>
-                <button onclick={() => addCategoryModal = false} type="button" class="  bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
-            </form>
-        </div>
-    {/if}
     <!-- -------------------- -->
     <!-- edit statement modal -->
     <!-- -------------------- -->
     {#if editStatementModal}
         <div class=" fixed w-screen h-screen top-0 left-0 flex justify-center items-center">
-            <button onclick={() => editStatementModal = false} aria-label="Closes the edit statement modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
+            <button onclick={() => [editStatementModal = false, selectedStatement = null, mainCategoryFocused = false, subCategoryFocused = false, mainCategoryValue = "", subCategoryValue = ""]} aria-label="Closes the edit statement modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
             <form method="post" action="?/editStatement" class=" flex flex-col w-80 z-30 bg-neutral-800 h-96 relative rounded-md p-4"
             use:enhance={({}) => {
-                return async ({ result, update }) => {
-
-                    await applyAction(result);
-                    
+                return async ({ result }) => {
                     if (result.type === "success") {
                         editStatementModal = false
                         selectedStatement = null
                         selectedStatements = []
-
-                        if (result.data && typeof result.data.formId === "string") {
-                            if (typeof JSON.parse(result.data.formId) === "object") {
-                                JSON.parse(result.data.formId).map((formStatement: accountStatementFormat) => {
-                                    accountStatementsEditable = accountStatementsEditable.filter((statement) => {
-                                        if (statement.statementId === formStatement.statementId) {
-                                            statement.hovedkategori = result.data?.formHovedkategori ? result.data.formHovedkategori as string : statement.hovedkategori
-                                            statement.underkategori = result.data?.underkategori ? result.data?.underkategori as string : statement.underkategori
-                                            statement.tekst = result.data?.tekst ? result.data?.tekst as string : statement.tekst
-                                        }
-                                        return statement;
-                                    })
-                                    return accountStatementsEditable;
-                                })
-                            } else {
-                                accountStatementsEditable = accountStatementsEditable.filter((statement) => {
-                                    if (result.data?.formId && statement.statementId === Number(result.data.formId)) {
-                                        statement.hovedkategori = result.data.formHovedkategori as string | null
-                                        statement.underkategori = result.data.formUnderkategori as string | null
-                                        statement.tekst = result.data.formTekst as string | null
-                                    }
-                                    return statement;
-                                })
-                            }
-                        }
-                        update();
+                        invalidateAll()
                     }
+
+                    await applyAction(result);
                 }
             }}>
                 <div class="flex items-center justify-center w-full flex-col">
-                    <div class="relative z-0 w-full mb-5 group mt-2">
-                        <label for="text" class="block mb-2 text-sm font-medium text-white">Text</label>
-                        <input type="text" id="text" name="text" value={selectedStatement ? selectedStatement?.tekst : null} class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
+                    <div class=" w-full mb-5 mt-2">
+                        <label for="text" class="block mb-2 text-sm font-medium ">Text</label>
+                        <input onfocus={() => [mainCategoryFocused = false, subCategoryFocused = false]} type="text" id="text" name="text" value={selectedStatement ? selectedStatement?.tekst : null} class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
                     </div>
-                        <p class=" w-full text-start mb-2 text-sm font-medium ">Main category</p>
-                        <div class="flex w-full mb-5">
-                            <button onclick={() => {
-                                isMainCategory = true
-                                addCategoryModal = true
-                            }} class="cursor-pointer shrink-0 z-10 inline-flex items-center py-2.5 px-4 text-sm font-medium text-center border  rounded-s-lg  focus:ring-4 focus:outline-none  bg-neutral-700 hover:bg-neutral-600 focus:ring-neutral-700 text-white border-neutral-600" type="button">
-                                +
-                            </button>
-                            <label for="hovedkategori" class="sr-only">Choose a main category</label>
-                            <select id="hovedkategori" name="hovedkategori" class=" cursor-pointer text-sm rounded-e-lg border-s-neutral-700 border-s-2 block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
-                                {#if !selectedStatement}
-                                    <option selected={true} value={null}></option>	
-                                {/if}
-                                {#if statistics}
-                                    {#each statistics.hovedkategorier as hovedkategori}
-                                        <option selected={selectedStatement?.hovedkategori === hovedkategori} value={hovedkategori}>{hovedkategori}</option>	
-                                    {/each}
-                                {/if}
-                            </select>
-                        </div>
-                        <p class=" w-full text-start mb-2 text-sm font-medium ">Sub category</p>
-                        <div class="flex w-full mb-5">
-                            <button onclick={() => {
-                                isMainCategory = false
-                                addCategoryModal = true
-                            }} class="cursor-pointer shrink-0 z-10 inline-flex items-center py-2.5 px-4 text-sm font-medium text-center border  rounded-s-lg  focus:ring-4 focus:outline-none  bg-neutral-700 hover:bg-neutral-600 focus:ring-neutral-700 text-white border-neutral-600" type="button">
-                                +
-                            </button>
-                            <label for="underkategori" class="sr-only">Choose a sub category</label>
-                            <select id="underkategori" name="underkategori" class=" cursor-pointer text-sm rounded-e-lg border-s-neutral-700 border-s-2 block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
-                                {#if !selectedStatement}
-                                    <option selected={true} value={null}></option>	
-                                {/if}
-                                {#if statistics}
-                                    {#each statistics.underkategorier as underkategori}
-                                        <option selected={selectedStatement?.underkategori === underkategori} value={underkategori}>{underkategori}</option>	
-                                    {/each}
-                                {/if}
-                            </select>
-                        </div>
-                    <input class=" hidden" type="text" name="id" id="id" value={selectedStatement ? selectedStatement?.statementId : JSON.stringify(selectedStatements.flat())}>
+                    <div class=" w-full mb-5 mt-2" use:clickOutside={() => mainCategoryFocused = false}>
+                        <label for="hovedkategori" class=" block mb-2 text-sm font-medium ">Main category</label>
+                        <input autocapitalize="on" autocomplete="off" type="text" id="hovedkategori" name="hovedkategori" placeholder="Main category..." bind:value={mainCategoryValue} onfocus={() => [mainCategoryFocused = true, subCategoryFocused = false]} class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
+                        {#if mainCategoryFocused}
+                            <div class=" absolute z-50 bg-neutral-700 rounded-lg w-3/4 left-20 font-medium text-sm mt-1 border border-neutral-600 max-h-20 overflow-y-scroll">
+                                {#each statistics.hovedkategorier as hovedkategori}
+                                    <button type="button" onclick={() => mainCategoryValue = hovedkategori} class=" p-2 w-full h-full cursor-pointer flex flex-start hover:bg-neutral-800 rounded-lg">
+                                        {hovedkategori}
+                                    </button>
+                                {/each}
+                            </div>
+                        {/if}
+                    </div>
+                    <div class=" w-full mb-5 mt-2" use:clickOutside={() => subCategoryFocused = false}>
+                        <label for="underkategori" class=" block mb-2 text-sm font-medium ">Sub category</label>
+                        <input autocapitalize="on" autocomplete="off" type="text" id="underkategori" name="underkategori" placeholder="Sub category..." bind:value={subCategoryValue} onfocus={() => [mainCategoryFocused = false, subCategoryFocused = true]} class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
+                        {#if subCategoryFocused}
+                            <div class=" absolute z-50 bg-neutral-700 rounded-lg w-3/4 left-20 font-medium text-sm mt-1 border border-neutral-600">
+                                {#each statistics.underkategorier as underkategori}
+                                    <button type="button" onclick={() => subCategoryValue = underkategori} class=" p-2 w-full h-full cursor-pointer flex flex-start hover:bg-neutral-800 rounded-lg">
+                                        {underkategori}
+                                    </button>
+                                {/each}
+                            </div>
+                        {/if}
+                    </div>
+                    <input class=" hidden" type="text" name="id" id="id" value={selectedStatement ? selectedStatement?.statementId : JSON.stringify(accountStatements.filter((statement) => {
+                        return selectedStatements.filter((statementId) => statementId === statement.statementId).length > 0
+                    }))}>
                 </div> 
                 <button type="submit" class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Confirm changes</button>
-                <button onclick={() => [editStatementModal = false, selectedStatement = null]} type="button" class="  bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
+                <button onclick={() => [editStatementModal = false, selectedStatement = null, mainCategoryFocused = false, subCategoryFocused = false, mainCategoryValue = "", subCategoryValue = ""]} type="button" class="  bg-neutral-600 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 right-5 hover:bg-neutral-700 ">Cancel</button>
             </form>
         </div>
     {/if}
@@ -153,7 +87,7 @@
     <!-- ------------------------------ -->
     {#if confirmDeleteStatementModal}
         <div class=" fixed w-screen h-screen top-0 left-0 flex justify-center items-center z-50">
-            <button onclick={() => addCategoryModal = false} aria-label="Closes the edit statement modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
+            <button onclick={() => [confirmDeleteStatementModal = false, selectedStatement = null]} aria-label="Closes the edit statement modal" class=" fixed h-screen w-screen bg-neutral-900/60 z-30 top-0 left-0 backdrop-blur-xs"></button>
             <form class=" flex flex-col w-80 z-30 bg-neutral-800 h-48 relative rounded-md p-4">
                 <div class="flex justify-center w-full flex-col">
                     {#if selectedStatement}
@@ -161,9 +95,9 @@
                         <p>You are about to delete a statement!</p>
                     {:else}
                         <p class=" font-semibold">Confirm delete statements</p>
-                        <p>You are about to delete {selectedStatements.flat().length} statements!</p>
+                        <p>You are about to delete {selectedStatements.length} statements!</p>
                     {/if}
-                </div> 
+                </div>
                 <button type="button" onclick={async (e) => {
                     if (selectedStatement) {
                         await fetch("/api/accountStatements/deleteStatement", {
@@ -173,26 +107,20 @@
                             },
                             body: JSON.stringify(selectedStatement?.statementId)
                         });
-                        accountStatementsEditable = [...accountStatements.filter((statement) => statement.statementId !== selectedStatement?.statementId)]
                     } else {
-                        selectedStatements = selectedStatements.flat()
-                        selectedStatements.map(async statement => {
-                            await fetch("/api/accountStatements/deleteStatement", {
-                                method: "DELETE",
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify(statement.statementId)
-                            });
+                        await fetch("/api/accountStatements/deleteStatements", {
+                            method: "DELETE",
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(selectedStatements)
                         });
-                        accountStatementsEditable = [...accountStatements.filter((dataStatement) => {
-                            return selectedStatements.filter((selectedStatementFilter) => dataStatement.statementId === selectedStatementFilter.statementId).length === 0
-                        })]
                     }
 
                     selectedStatement = null
                     selectedStatements = []
                     confirmDeleteStatementModal = false
+                    invalidateAll()
                 }}
 
                 class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 absolute bottom-5 left-5  hover:bg-blue-800">Confirm delete</button>
@@ -218,7 +146,7 @@
             </div> -->
         </div>
         <div class=" flex w-full justify-between items-center">
-            <p class=" text-xs text-neutral-400">Showing <span class=" font-bold text-neutral-200">{accountStatementsEditable.length}</span> account statements of <span class=" font-bold text-neutral-200">{accountStatements.length}</span></p>
+            <p class=" text-xs text-neutral-400">Showing <span class=" font-bold text-neutral-200">{accountStatements.length}</span> account statements of <span class=" font-bold text-neutral-200">{accountStatements.length}</span></p>
             <!-- <div class=" flex gap-2">
                 <div class=" text-xs p-1 text-neutral-400 border border-neutral-600 font-medium  rounded-sm">Mar 18 2025 - Feb 17 2025 x</div>
                 <div class=" text-xs p-1 text-neutral-400 border border-neutral-600 font-medium  rounded-sm">0kr - 10000kr x</div>
@@ -233,7 +161,7 @@
             <thead class="text-xs uppercase bg-neutral-950  text-nowrap">
                 <tr>
                     <th scope="col" class="px-6 py-5">
-                        <input onchange={() => {if (accountStatementsEditable.length === selectedStatements.length) {selectedStatements = []} else {selectedStatements = accountStatementsEditable}}} checked={accountStatementsEditable.length === selectedStatements.length} type="checkbox" name="checkbox" id="checkbox"  class=" cursor-pointer w-4 h-4 text-blue-600 bg-neutral-700 border-neutral-600 rounded-sm focus:ring-0"/>
+                        <input onchange={() => {if (accountStatements.length === selectedStatements.length) {selectedStatements = []} else {selectedStatements = accountStatements.map((statement) => statement.statementId)}}} checked={accountStatements.length === selectedStatements.length} type="checkbox" name="checkbox" id="checkbox"  class=" cursor-pointer w-4 h-4 text-blue-600 bg-neutral-700 border-neutral-600 rounded-sm focus:ring-0"/>
                     </th>
                     <th scope="col" class="px-6 py-5">
                         Date
@@ -272,10 +200,10 @@
                 </tr>
             </thead>
             <tbody>
-                {#each accountStatementsEditable as statement}
+                {#each accountStatements as statement}
                     <tr class=" border-b bg-neutral-900 border-neutral-800 text-xs text-neutral-400">
                         <th scope="col" class="px-6 py-5">
-                            <input bind:group={selectedStatements} value={statement} type="checkbox" name="checkbox" id="checkbox" class=" cursor-pointer w-4 h-4 bg-neutral-700 border border-neutral-600 rounded-sm focus:ring-0"/>
+                            <input bind:group={selectedStatements} value={statement.statementId} checked={selectedStatements.includes(statement.statementId)} type="checkbox" name="checkbox" id="checkbox" class=" cursor-pointer w-4 h-4 bg-neutral-700 border border-neutral-600 rounded-sm focus:ring-0"/>
                         </th>
                         <td class="px-6 py-4 text-nowrap">
                             {new Date(statement.dato).toDateString()}
@@ -296,7 +224,7 @@
                             {statement.underkategori}
                         </td>
                         <td class="px-6 py-4">
-                            <button onclick={() => [editStatementModal = true, selectedStatement = statement]} class=" flex text-nowrap font-bold cursor-pointer">
+                            <button onclick={() => [editStatementModal = true, selectedStatement = statement, mainCategoryValue = statement.hovedkategori, subCategoryValue = statement.underkategori]} class=" flex text-nowrap font-bold cursor-pointer">
                                 <Edit color="darkNeutral" size="small" />
                             </button>
                         </td>
