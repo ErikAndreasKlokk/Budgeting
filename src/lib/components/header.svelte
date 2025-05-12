@@ -9,7 +9,7 @@
 </script>
 
 <header class=" min-w-60 flex flex-col items-center relative bg-neutral-900">
-    <a href="/" class=" text-neutral-200 text-3xl font-bold font-serif italic mt-10"><span class=" text-blue-700 text-5xl font-sans not-italic">B</span>udgeting</a>
+    <a href="/" class=" mt-10"><img class=" h-12" src="/2.png" alt=""></a>
     <div class=" mt-20 w-40">
         <a href="/" class=" cursor-pointer flex items-center my-3 underline text-xl font-medium gap-1">
             <Home />
