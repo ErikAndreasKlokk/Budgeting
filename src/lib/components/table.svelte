@@ -1,11 +1,14 @@
 <script lang="ts">
-	import type { accountStatementFormat } from "../../routes/dashboard/proxy+page.server";
+	import { type accountStatementFormat, type SortKey } from "../../routes/dashboard/proxy+page.server";
     import { enhance, applyAction  } from '$app/forms';
 	import Edit from "./icons/edit.svelte";
 	import Delete from "./icons/delete.svelte";
 	import Search from "./icons/search.svelte";
-	import { invalidateAll } from "$app/navigation";
+	import { goto, invalidateAll } from "$app/navigation";
 	import { clickOutside } from "svelte-outside";
+	import ArrowDown from "./icons/arrowDown.svelte";
+	import ArrowUp from "./icons/arrowUp.svelte";
+	import { onMount } from "svelte";
 
     const { accountStatements, statistics }: { accountStatements: accountStatementFormat[], statistics: any} = $props()
 
@@ -20,6 +23,30 @@
 
 	let selectedStatement: accountStatementFormat | null = $state(null)
 	let selectedStatements: number[] = $state([])
+
+    let currentSortParam = $state();
+    let currentDirParam = $state();
+
+    onMount(() => {
+        currentSortParam = new URLSearchParams(window.location.search).get("sortBy")
+        currentDirParam = new URLSearchParams(window.location.search).get("sortDir")
+    })
+
+    function updateSort(col: SortKey) {
+        const params = new URLSearchParams(window.location.search);
+        const currentBy  = params.get('sortBy');
+        const currentDir = params.get('sortDir');
+        const dir =
+            currentBy === col
+                ? (currentDir === 'asc' ? 'desc' : 'asc')
+                : 'desc';
+        params.set('sortBy', col);
+        params.set('sortDir', dir);
+        goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
+        currentSortParam = col
+        currentDirParam = dir
+    }
+
 </script>
 
 <div>
@@ -160,26 +187,68 @@
         <table class="w-full text-sm text-left rounded-4xl">
             <thead class="text-xs uppercase bg-neutral-950  text-nowrap">
                 <tr>
-                    <th scope="col" class="px-6 py-5">
+                    <th class="px-6 py-5">
                         <input onchange={() => {if (accountStatements.length === selectedStatements.length) {selectedStatements = []} else {selectedStatements = accountStatements.map((statement) => statement.statementId)}}} checked={accountStatements.length === selectedStatements.length} type="checkbox" name="checkbox" id="checkbox"  class=" cursor-pointer w-4 h-4 text-blue-600 bg-neutral-700 border-neutral-600 rounded-sm focus:ring-0"/>
                     </th>
-                    <th scope="col" class="px-6 py-5">
-                        Date
+                    <th class="px-6 py-5 cursor-pointer" onclick={() => updateSort("dato")}>
+                        <div class=" flex">
+                            Date 
+                            {#if currentSortParam === "dato" && currentDirParam === "desc"}
+                                <ArrowUp />
+                            {:else}
+                                <ArrowDown />
+                            {/if}
+                        </div>
                     </th>
-                    <th scope="col" class="px-6 py-5">
-                        Money in
+                    <th class="px-6 py-5 cursor-pointer" onclick={() => updateSort("innPaaKonto")}>
+                        <div class=" flex">
+                            Money in
+                            {#if currentSortParam === "innPaaKonto" && currentDirParam === "desc"}
+                                <ArrowUp />
+                            {:else}
+                                <ArrowDown />
+                            {/if}
+                        </div>
                     </th>
-                    <th scope="col" class="px-6 py-5">
-                        Money out
+                    <th class="px-6 py-5 cursor-pointer" onclick={() => updateSort("utFraKonto")}>
+                        <div class=" flex">
+                            Money out
+                            {#if currentSortParam === "utFraKonto" && currentDirParam === "desc"}
+                                <ArrowUp />
+                            {:else}
+                                <ArrowDown />
+                            {/if}
+                        </div>
                     </th>
-                    <th scope="col" class="px-6 py-5">
-                        Text
+                    <th class="px-6 py-5 cursor-pointer" onclick={() => updateSort("tekst")}>
+                        <div class=" flex">
+                            Text
+                            {#if currentSortParam === "tekst" && currentDirParam === "desc"}
+                                <ArrowUp />
+                            {:else}
+                                <ArrowDown />
+                            {/if}
+                        </div>
                     </th>
-                    <th scope="col" class="px-6 py-5">
-                        Main category
+                    <th class="px-6 py-5 cursor-pointer" onclick={() => updateSort("hovedkategori")}>
+                        <div class=" flex">
+                            Main category
+                            {#if currentSortParam === "hovedkategori" && currentDirParam === "desc"}
+                                <ArrowUp />
+                            {:else}
+                                <ArrowDown />
+                            {/if}
+                        </div>
                     </th>
-                    <th scope="col" class="px-6 py-5">
-                        Sub category
+                    <th class="px-6 py-5 cursor-pointer" onclick={() => updateSort("underkategori")}>
+                        <div class=" flex">
+                            Sub category
+                            {#if currentSortParam === "underkategori" && currentDirParam === "desc"}
+                                <ArrowUp />
+                            {:else}
+                                <ArrowDown />
+                            {/if}
+                        </div>
                     </th>
                     <td class="px-6 py-4">
                         <button 

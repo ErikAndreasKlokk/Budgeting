@@ -96,7 +96,7 @@
 		</div>
 		{#await data.statistics}
 			<p>Awaiting data...</p>
-		{:then statistics} 
+		{:then statistics}
 			<div class=" flex justify-evenly w-full gap-20">
 				<!-- ---------------- -->
 				<!-- Money spent card -->
