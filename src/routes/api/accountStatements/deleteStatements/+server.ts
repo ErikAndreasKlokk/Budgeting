@@ -9,12 +9,12 @@ export const DELETE: RequestHandler = async ({ request, locals }) => {
 
     if(!locals.user || !locals.session) return new Response("Unauthorized request", { status: 401 });
 
-    statementIds.map(async (statementId) => {
+    await Promise.all(statementIds.map(async (statementId) => {
         await db.delete(table.accountStatements).where(sql`
             ${table.accountStatements.userId} = ${locals?.user?.id}
             and ${table.accountStatements.id} = ${statementId}
         `)
-    })
+    }))
 
     return new Response(null, { status: 204 })
 }

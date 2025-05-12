@@ -5,7 +5,6 @@ import Papa from 'papaparse';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
-import { stringify } from 'node:querystring';
 
 interface csvBulderFormat {
     Dato: string,
@@ -173,8 +172,8 @@ export const actions: Actions = {
         const stream = Readable.from(Buffer.from(file));
         const parsedCSV = await parseCSV(stream)
 
-        try {
-            parsedCSV.forEach(async (line) => {
+        for (const line of parsedCSV) {
+            try {
                 if (!event.locals.user?.id) return;
 
                 if(!line.Dato) return fail(400, { message: "Atleast one line in the file is missing a date"});
@@ -214,11 +213,9 @@ export const actions: Actions = {
                     hovedkategori: line.Hovedkategori,
                     underkategori: line.Underkategori
                 })
-            })
-
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (e) {
-            return fail(500, { message: 'An error has occurred' });
+            } catch (e) {
+                return fail(500, { message: 'An error has occurred' });
+            }
         }
     },
     editStatement: async (event) => {

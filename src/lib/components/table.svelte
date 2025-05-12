@@ -42,31 +42,31 @@
                     await applyAction(result);
                 }
             }}>
-                <div class="flex items-center justify-center w-full flex-col">
+                <div class="flex w-full flex-col">
                     <div class=" w-full mb-5 mt-2">
-                        <label for="text" class="block mb-2 text-sm font-medium ">Text</label>
+                        <p class="block mb-2 text-sm font-medium ">Text</p>
                         <input onfocus={() => [mainCategoryFocused = false, subCategoryFocused = false]} type="text" id="text" name="text" value={selectedStatement ? selectedStatement?.tekst : null} class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
                     </div>
-                    <div class=" w-full mb-5 mt-2" use:clickOutside={() => mainCategoryFocused = false}>
-                        <label for="hovedkategori" class=" block mb-2 text-sm font-medium ">Main category</label>
+                    <p class=" block mb-2 text-sm font-medium ">Main category</p>
+                    <div class=" w-full mb-5" use:clickOutside={() => mainCategoryFocused = false}>
                         <input autocapitalize="on" autocomplete="off" type="text" id="hovedkategori" name="hovedkategori" placeholder="Main category..." bind:value={mainCategoryValue} onfocus={() => [mainCategoryFocused = true, subCategoryFocused = false]} class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
                         {#if mainCategoryFocused}
-                            <div class=" absolute z-50 bg-neutral-700 rounded-lg w-3/4 left-20 font-medium text-sm mt-1 border border-neutral-600 max-h-20 overflow-y-scroll">
+                            <div class=" absolute z-50 bg-neutral-700 rounded-lg w-3/4 left-20 font-medium text-sm mt-1 border border-neutral-600 max-h-40 overflow-y-scroll">
                                 {#each statistics.hovedkategorier as hovedkategori}
-                                    <button type="button" onclick={() => mainCategoryValue = hovedkategori} class=" p-2 w-full h-full cursor-pointer flex flex-start hover:bg-neutral-800 rounded-lg">
+                                    <button type="button" onclick={() => [mainCategoryValue = hovedkategori, mainCategoryFocused = false]} class=" p-2 w-full h-full cursor-pointer flex flex-start hover:bg-neutral-800 rounded-lg">
                                         {hovedkategori}
                                     </button>
                                 {/each}
                             </div>
                         {/if}
                     </div>
-                    <div class=" w-full mb-5 mt-2" use:clickOutside={() => subCategoryFocused = false}>
-                        <label for="underkategori" class=" block mb-2 text-sm font-medium ">Sub category</label>
+                    <p class=" block mb-2 text-sm font-medium ">Sub category</p>
+                    <div class=" w-full mb-5" use:clickOutside={() => subCategoryFocused = false}>
                         <input autocapitalize="on" autocomplete="off" type="text" id="underkategori" name="underkategori" placeholder="Sub category..." bind:value={subCategoryValue} onfocus={() => [mainCategoryFocused = false, subCategoryFocused = true]} class=" text-sm rounded-lg block w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
                         {#if subCategoryFocused}
-                            <div class=" absolute z-50 bg-neutral-700 rounded-lg w-3/4 left-20 font-medium text-sm mt-1 border border-neutral-600">
+                            <div class=" absolute z-50 bg-neutral-700 rounded-lg w-3/4 left-20 font-medium text-sm mt-1 border border-neutral-600 max-h-40 overflow-y-scroll">
                                 {#each statistics.underkategorier as underkategori}
-                                    <button type="button" onclick={() => subCategoryValue = underkategori} class=" p-2 w-full h-full cursor-pointer flex flex-start hover:bg-neutral-800 rounded-lg">
+                                    <button type="button" onclick={() => [subCategoryValue = underkategori, subCategoryFocused = false]} class=" p-2 w-full h-full cursor-pointer flex flex-start hover:bg-neutral-800 rounded-lg">
                                         {underkategori}
                                     </button>
                                 {/each}
@@ -91,11 +91,11 @@
             <form class=" flex flex-col w-80 z-30 bg-neutral-800 h-48 relative rounded-md p-4">
                 <div class="flex justify-center w-full flex-col">
                     {#if selectedStatement}
-                        <p class=" font-semibold">Confirm delete statement</p>
+                        <p class=" font-semibold text-lg mb-1">Confirm delete statement</p>
                         <p>You are about to delete a statement!</p>
                     {:else}
-                        <p class=" font-semibold">Confirm delete statements</p>
-                        <p>You are about to delete {selectedStatements.length} statements!</p>
+                        <p class=" font-semibold text-lg mb-1">Confirm delete statements</p>
+                        <p>You are about to delete <span class=" font-bold underline">{selectedStatements.length}</span> statements!</p>
                     {/if}
                 </div>
                 <button type="button" onclick={async (e) => {
