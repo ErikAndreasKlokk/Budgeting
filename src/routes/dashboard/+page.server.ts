@@ -221,12 +221,12 @@ export const actions: Actions = {
         const stream = Readable.from(Buffer.from(file));
         const parsedCSV = await parseCSV(stream)
 
-        for (const line of parsedCSV) {
-            try {
+        try {
+            parsedCSV.map(async (line) => {
                 if (!event.locals.user?.id) return;
-
+                
                 if (!line.Dato) return fail(400, { message: "Atleast one line in the file is missing a date" });
-
+                
                 const accountStatement = await db.select({
                     dato: table.accountStatements.dato
                 }).from(table.accountStatements).where(sql`
@@ -241,14 +241,12 @@ export const actions: Actions = {
                     and ${table.accountStatements.type}           = ${line.Type}
                     and ${table.accountStatements.kid}            = ${line.KID}
                 `).limit(1);
-                
 
-                /* TODO: fix duplicate statements */
-                /* if (accountStatement.length !== 0) return; */
+                if (accountStatement.length !== 0) return; 
 
                 if (!line.Hovedkategori || line.Hovedkategori.trim() === "") line.Hovedkategori = "No category";
                 if (!line.Underkategori || line.Underkategori.trim() === "") line.Underkategori = "No category";
-
+                
                 await db.insert(table.accountStatements).values({
                     userId: event.locals.user.id,
                     dato: line.Dato,
@@ -264,9 +262,10 @@ export const actions: Actions = {
                     hovedkategori: line.Hovedkategori,
                     underkategori: line.Underkategori
                 })
-            } catch (e) {
-                return fail(500, { message: 'An error has occurred' });
-            }
+            })
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+            return fail(500, { message: 'An error has occurred' });
         }
     },
     editStatement: async (event) => {

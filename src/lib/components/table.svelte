@@ -58,7 +58,7 @@
 
 </script>
 
-<div>
+<div class=" w-full">
     <!-- -------------------- -->
     <!-- edit statement modal -->
     <!-- -------------------- -->
@@ -202,7 +202,7 @@
                     <th class="px-6 py-5">
                         <input onchange={() => {if (accountStatements.length === selectedStatements.length) {selectedStatements = []} else {selectedStatements = accountStatements.map((statement) => statement.statementId)}}} checked={accountStatements.length === selectedStatements.length} type="checkbox" name="checkbox" id="checkbox"  class=" cursor-pointer w-4 h-4 text-blue-600 bg-neutral-700 border-neutral-600 rounded-sm focus:ring-0"/>
                     </th>
-                    <th class="px-6 py-5 cursor-pointer" onclick={() => updateSort("dato")}>
+                    <th class="px-3 py-5 cursor-pointer" onclick={() => updateSort("dato")}>
                         <div class=" flex">
                             Date 
                             {#if currentSortParam === "dato" && currentDirParam === "desc"}
@@ -212,7 +212,7 @@
                             {/if}
                         </div>
                     </th>
-                    <th class="px-6 py-5 cursor-pointer" onclick={() => updateSort("innPaaKonto")}>
+                    <th class="px-3 py-5 cursor-pointer" onclick={() => updateSort("innPaaKonto")}>
                         <div class=" flex">
                             Money in
                             {#if currentSortParam === "innPaaKonto" && currentDirParam === "desc"}
@@ -222,7 +222,7 @@
                             {/if}
                         </div>
                     </th>
-                    <th class="px-6 py-5 cursor-pointer" onclick={() => updateSort("utFraKonto")}>
+                    <th class="px-3 py-5 cursor-pointer" onclick={() => updateSort("utFraKonto")}>
                         <div class=" flex">
                             Money out
                             {#if currentSortParam === "utFraKonto" && currentDirParam === "desc"}
@@ -232,7 +232,7 @@
                             {/if}
                         </div>
                     </th>
-                    <th class="px-6 py-5 cursor-pointer" onclick={() => updateSort("tekst")}>
+                    <th class="px-3 py-5 cursor-pointer" onclick={() => updateSort("tekst")}>
                         <div class=" flex">
                             Text
                             {#if currentSortParam === "tekst" && currentDirParam === "desc"}
@@ -242,7 +242,7 @@
                             {/if}
                         </div>
                     </th>
-                    <th class="px-6 py-5 cursor-pointer" onclick={() => updateSort("hovedkategori")}>
+                    <th class="px-3 py-5 cursor-pointer" onclick={() => updateSort("hovedkategori")}>
                         <div class=" flex">
                             Main category
                             {#if currentSortParam === "hovedkategori" && currentDirParam === "desc"}
@@ -252,7 +252,7 @@
                             {/if}
                         </div>
                     </th>
-                    <th class="px-6 py-5 cursor-pointer" onclick={() => updateSort("underkategori")}>
+                    <th class="px-3 py-5 cursor-pointer" onclick={() => updateSort("underkategori")}>
                         <div class=" flex">
                             Sub category
                             {#if currentSortParam === "underkategori" && currentDirParam === "desc"}
@@ -262,7 +262,7 @@
                             {/if}
                         </div>
                     </th>
-                    <td class="px-6 py-4">
+                    <td class="px-5 py-4">
                         <button 
                             disabled={selectedStatements.length <= 0} 
                             onclick={() => [editStatementModal = true]} 
@@ -270,7 +270,7 @@
                             <Edit size="small" color={selectedStatements.length <= 0 ? "darkNeutral" : "neutral"}/>
                         </button>
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-5 py-4">
                         <button 
                             disabled={selectedStatements.length <= 0}
                             onclick={() => confirmDeleteStatementModal = true}
@@ -286,30 +286,30 @@
                         <th scope="col" class="px-6 py-5">
                             <input bind:group={selectedStatements} value={statement.statementId} checked={selectedStatements.includes(statement.statementId)} type="checkbox" name="checkbox" id="checkbox" class=" cursor-pointer w-4 h-4 bg-neutral-700 border border-neutral-600 rounded-sm focus:ring-0"/>
                         </th>
-                        <td class="px-6 py-4 text-nowrap">
+                        <td class="px-3 py-5 text-nowrap">
                             {new Date(statement.dato).toDateString()}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-3 py-5">
                             {statement.innPaaKonto}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-3 py-5">
                             {statement.utFraKonto}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-3 py-5">
                             {statement.tekst}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-3 py-5">
                             {statement.hovedkategori}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-3 py-5">
                             {statement.underkategori}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-5 py-5">
                             <button onclick={() => [editStatementModal = true, selectedStatement = statement, mainCategoryValue = statement.hovedkategori, subCategoryValue = statement.underkategori]} class=" flex text-nowrap font-bold cursor-pointer">
                                 <Edit color="darkNeutral" size="small" />
                             </button>
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-5 py-5">
                             <button 
                                 onclick={() => [confirmDeleteStatementModal = true, selectedStatement = statement]}
                                 class=" flex text-nowrap font-bold cursor-pointer">

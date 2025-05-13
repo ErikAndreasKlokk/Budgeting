@@ -210,7 +210,7 @@
 
 
 		{#await data.accountStatements}
-			<div class=" w-11/12 rounded-xl bg-neutral-800 border border-neutral-700 h-60"></div>
+			<div class=" max-w-11/12 w-full rounded-xl bg-neutral-800 border border-neutral-700 h-60"></div>
 		{:then accountStatements} 
 			{#if accountStatements?.length !== 0 && accountStatements !== undefined}
 				<Table {accountStatements} statistics={data.statistics} />
