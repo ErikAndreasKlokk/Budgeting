@@ -195,6 +195,7 @@
                         <button onclick={() => searchFunc(searchValue)} class=" text-sm rounded-r-lg p-2.5 bg-neutral-700 border border-neutral-600 cursor-pointer"><Search /></button>
                     </div>
                 </div>
+                <!-- TODO: add a select between dates dropdown to select what dates the account statements should be between -->
                 <div class=" w-60 mb-5 group mt-2">
                     <label for="text" class="mb-2 text-sm font-medium text-white flex gap-1">
                         <Calendar />
@@ -203,7 +204,6 @@
                     <input disabled={true} type="text" id="text" name="text" class=" text-sm rounded-lg w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
                 </div>
             </div>
-            <!-- <p class=" text-xs text-neutral-400">Showing <span class=" font-bold text-neutral-200 underline">{perPageNumber}</span> account statements of <span class=" font-bold text-neutral-200">{accountStatements.length}</span></p> -->
         </div>
     </div>
     <!-- --------------------------- -->
@@ -339,9 +339,15 @@
         <div class=" flex justify-between h-14 items-center p-4 bg-neutral-950">
             <p class=" text-xs text-neutral-400">Showing <span class=" font-bold text-neutral-200 underline">{perPageNumber * paginationNumber + 1} - {perPageNumber * paginationNumber + perPageNumber > accountStatementsCount[0].count ? accountStatementsCount[0].count : perPageNumber * paginationNumber + perPageNumber}</span> account statements of <span class=" font-bold text-neutral-200">{accountStatementsCount[0].count}</span></p>
             <div class=" h-full flex items-center">
+                <!-- TODO: Add dropdown to select how many to show per page -->
+                 <!-- Use the perPageNumber variable and the url param "perPage" -->
+                <div>
+
+                </div>
                 <button disabled={ paginationNumber === 0 } onclick={() => pagination(paginationNumber - 1) } class=" rotate-90 active:scale-95 cursor-pointer p-2">
                     <ArrowDown color={ paginationNumber === 0 ? "darkNeutral" : "neutral" } />
-                </button> 
+                </button>
+                <!-- Add functionality for better pagination buttons so that they range from 1,2,3, ..., 7 -->
                 <div class=" flex gap-1">
                     {#each { length: Math.ceil(accountStatementsCount[0].count / perPageNumber) }, i}
                         <button onclick={() => pagination(i)} class=" px-2.5 py-1 font-medium border border-neutral-700 rounded-md cursor-pointer active:scale-95 text-sm">{i + 1}</button>

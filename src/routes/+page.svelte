@@ -9,6 +9,8 @@
     ];
 </script>
 
+<!-- TODO: FIX THIS -->
+
 <main class="w-full flex flex-col items-center bg-neutral-800 h-full">
     <div class="flex flex-col gap-10 my-20 px-12 items-center z-0 w-full max-w-[1100px]">
         <div class="text-center">

@@ -96,6 +96,7 @@
 			{/if}
 		</div>
 		{#await data.statistics}
+			<!-- TODO: Add money spent and money earned skeleton cards -->
 			<p>Awaiting data...</p>
 		{:then statistics}
 			<div class=" flex justify-evenly w-full gap-20">
@@ -105,6 +106,7 @@
 				<div class=" w-full rounded-2xl h-[600px] bg-neutral-900 flex flex-col p-10">
 					<div class=" mb-9">
 						<p class=" text-4xl font-bold ">Money spent</p>
+						<!-- TODO: add functionality for choosing what dates to show data from -->
 						<button class=" flex items-center text-neutral-400 italic cursor-pointer mt-1">
 							Feb 2025 - Mar 2025
 							<ArrowDown color="darkNeutral"/>
@@ -156,6 +158,7 @@
 					<div class=" mb-9">
 						<p class=" text-4xl font-bold ">Money earned</p>
 						<button class=" flex items-center text-neutral-400 italic cursor-pointer mt-1">
+							<!-- TODO: add functionality for choosing what dates to show data from -->
 							Feb 2025 - Mar 2025
 							<ArrowDown color="darkNeutral"/>
 						</button>
