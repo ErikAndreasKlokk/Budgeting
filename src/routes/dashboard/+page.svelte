@@ -5,6 +5,7 @@
 	import type { ActionData } from './$types';
 	import { Arc, Chart, Group, LinearGradient, Pie, Svg, Tooltip, Text } from 'layerchart';
 	import Table from '$lib/components/table.svelte';
+	import TableSkeleton from '$lib/components/tableSkeleton.svelte';
 	import CloudUpload from '$lib/components/icons/cloudUpload.svelte';
 	import ArrowDown from '$lib/components/icons/arrowDown.svelte';
 	import Leaderboard from '$lib/components/icons/leaderboard.svelte';
@@ -207,13 +208,18 @@
 			
 
 	<!-- ----------------------------------------------------------------------------------------------------------- -->
-
-
+	
 		{#await data.accountStatements}
-			<div class=" max-w-11/12 w-full rounded-xl bg-neutral-800 border border-neutral-700 h-60"></div>
+			<TableSkeleton />
 		{:then accountStatements} 
 			{#if accountStatements?.length !== 0 && accountStatements !== undefined}
-				<Table {accountStatements} statistics={data.statistics} />
+				{#await data.accountStatementsCount}
+					<TableSkeleton />
+				{:then accountStatementsCount} 
+					<Table {accountStatements} statistics={data.statistics} {accountStatementsCount} />
+				{/await}
+			{:else}
+				<TableSkeleton />
 			{/if}
 		{/await}
 	</div>

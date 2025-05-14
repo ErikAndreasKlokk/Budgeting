@@ -4,7 +4,7 @@ import { Readable } from 'node:stream';
 import Papa from 'papaparse';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
-import { desc, eq, sql, asc, and, or } from 'drizzle-orm';
+import { desc, eq, sql, asc, and, or, count } from 'drizzle-orm';
 
 interface csvBulderFormat {
     Dato: string,
@@ -64,6 +64,8 @@ export const load: PageServerLoad = async (event) => {
     const sortBy = (url.searchParams.get('sortBy') as SortKey) ?? 'dato';
     const sortDir = (url.searchParams.get('sortDir') as SortDir) ?? 'desc';
     const search = url.searchParams.get('search') ?? null;
+    const paginationNumber = url.searchParams.get('page') ? Number(url.searchParams.get('page')) : 0;
+    const perPageNumber = url.searchParams.get('perPage') ? Number(url.searchParams.get('perPage')) : 20;
 
     const col = columnMap[sortBy]!;
     let sortOrder;
@@ -85,24 +87,45 @@ export const load: PageServerLoad = async (event) => {
         hovedkategori: table.accountStatements.hovedkategori,
         underkategori: table.accountStatements.underkategori
     })
-        .from(table.accountStatements)
-        .where(
-            search ?
-                and(
-                    eq(table.accountStatements.userId, event.locals.user.id),
-                    or(
-                        sql`LOWER(${table.accountStatements.dato}) LIKE LOWER(${`%${search}%`})`,
-                        sql`LOWER(${table.accountStatements.innPaaKonto}) LIKE LOWER(${`%${search}%`})`,
-                        sql`LOWER(${table.accountStatements.utFraKonto}) LIKE LOWER(${`%${search}%`})`,
-                        sql`LOWER(${table.accountStatements.tekst}) LIKE LOWER(${`%${search}%`})`,
-                        sql`LOWER(${table.accountStatements.hovedkategori}) LIKE LOWER(${`%${search}%`})`,
-                        sql`LOWER(${table.accountStatements.underkategori}) LIKE LOWER(${`%${search}%`})`
-                    )
+    .from(table.accountStatements)
+    .where(
+        search ?
+            and(
+                eq(table.accountStatements.userId, event.locals.user.id),
+                or(
+                    sql`LOWER(${table.accountStatements.dato}) LIKE LOWER(${`%${search}%`})`,
+                    sql`LOWER(${table.accountStatements.innPaaKonto}) LIKE LOWER(${`%${search}%`})`,
+                    sql`LOWER(${table.accountStatements.utFraKonto}) LIKE LOWER(${`%${search}%`})`,
+                    sql`LOWER(${table.accountStatements.tekst}) LIKE LOWER(${`%${search}%`})`,
+                    sql`LOWER(${table.accountStatements.hovedkategori}) LIKE LOWER(${`%${search}%`})`,
+                    sql`LOWER(${table.accountStatements.underkategori}) LIKE LOWER(${`%${search}%`})`
                 )
-                :
-                eq(table.accountStatements.userId, event.locals.user.id)
-        )
-        .orderBy(sortOrder);
+            )
+            :
+            eq(table.accountStatements.userId, event.locals.user.id)
+    )
+    .orderBy(sortOrder)
+    .limit(perPageNumber)
+    .offset(perPageNumber * paginationNumber);
+
+    const accountStatementsCount = db.select({ count: count() })
+    .from(table.accountStatements)
+    .where(
+        search ?
+            and(
+                eq(table.accountStatements.userId, event.locals.user.id),
+                or(
+                    sql`LOWER(${table.accountStatements.dato}) LIKE LOWER(${`%${search}%`})`,
+                    sql`LOWER(${table.accountStatements.innPaaKonto}) LIKE LOWER(${`%${search}%`})`,
+                    sql`LOWER(${table.accountStatements.utFraKonto}) LIKE LOWER(${`%${search}%`})`,
+                    sql`LOWER(${table.accountStatements.tekst}) LIKE LOWER(${`%${search}%`})`,
+                    sql`LOWER(${table.accountStatements.hovedkategori}) LIKE LOWER(${`%${search}%`})`,
+                    sql`LOWER(${table.accountStatements.underkategori}) LIKE LOWER(${`%${search}%`})`
+                )
+            )
+            :
+            eq(table.accountStatements.userId, event.locals.user.id)
+    )
 
     const hovedkategorier: string[] = []
     const underkategorier: string[] = []
@@ -201,7 +224,8 @@ export const load: PageServerLoad = async (event) => {
     return {
         user: event.locals.user,
         accountStatements: await accountStatements,
-        statistics: await createStatistics()
+        statistics: await createStatistics(),
+        accountStatementsCount: await accountStatementsCount
     };
 };
 

@@ -11,7 +11,7 @@
 	import { onMount } from "svelte";
 	import Calendar from "./icons/calendar.svelte";
 
-    const { accountStatements, statistics }: { accountStatements: accountStatementFormat[], statistics: any} = $props()
+    const { accountStatements, statistics, accountStatementsCount }: { accountStatements: accountStatementFormat[], statistics: any, accountStatementsCount: any} = $props()
 
     let editStatementModal = $state(false)
 	let confirmDeleteStatementModal = $state(false)
@@ -27,12 +27,17 @@
 
     let currentSortParam = $state();
     let currentDirParam = $state();
-    let searchValue = $state()
+    let searchValue = $state("")
+
+    let paginationNumber = $state(1000000)
+    let perPageNumber = $state(20)
 
     onMount(() => {
         currentSortParam = new URLSearchParams(window.location.search).get("sortBy")
         currentDirParam = new URLSearchParams(window.location.search).get("sortDir")
-        searchValue = new URLSearchParams(window.location.search).get("search")
+        searchValue = new URLSearchParams(window.location.search).get("search") ?? ""
+        paginationNumber = new URLSearchParams(window.location.search).get("page") ? Number(new URLSearchParams(window.location.search).get("page")) : 0
+        perPageNumber = new URLSearchParams(window.location.search).get("perPage") ? Number(new URLSearchParams(window.location.search).get("perPage")) : perPageNumber
     })
 
     function updateSort(col: SortKey) {
@@ -51,8 +56,17 @@
     }
 
     function searchFunc(searchParam: string) {
+        paginationNumber = 0
         const params = new URLSearchParams(window.location.search);
         params.set('search', searchParam);
+        params.set('page', "0");
+        goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
+    }
+
+    function pagination(newPaginationNumber: number) {
+        paginationNumber = newPaginationNumber
+        const params = new URLSearchParams(window.location.search);
+        params.set('page', newPaginationNumber.toString());
         goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
     }
 
@@ -168,7 +182,7 @@
     <!-- ------------ -->
     <!-- Table filter -->
     <!-- ------------ -->
-    <div class=" mb-5">
+    <div class=" mb-3">
         <div class=" w-full">
             <div class=" w-full flex justify-between">
                 <div class=" w-80 mb-5 group mt-2">
@@ -189,7 +203,7 @@
                     <input disabled={true} type="text" id="text" name="text" class=" text-sm rounded-lg w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
                 </div>
             </div>
-            <p class=" text-xs text-neutral-400">Showing <span class=" font-bold text-neutral-200">{accountStatements.length}</span> account statements of <span class=" font-bold text-neutral-200">{accountStatements.length}</span></p>
+            <!-- <p class=" text-xs text-neutral-400">Showing <span class=" font-bold text-neutral-200 underline">{perPageNumber}</span> account statements of <span class=" font-bold text-neutral-200">{accountStatements.length}</span></p> -->
         </div>
     </div>
     <!-- --------------------------- -->
@@ -281,47 +295,62 @@
                 </tr>
             </thead>
             <tbody>
-                {#each accountStatements as statement}
-                    <tr class=" border-b bg-neutral-900 border-neutral-800 text-xs text-neutral-400">
-                        <th scope="col" class="px-6 py-5">
-                            <input bind:group={selectedStatements} value={statement.statementId} checked={selectedStatements.includes(statement.statementId)} type="checkbox" name="checkbox" id="checkbox" class=" cursor-pointer w-4 h-4 bg-neutral-700 border border-neutral-600 rounded-sm focus:ring-0"/>
-                        </th>
-                        <td class="px-3 py-5 text-nowrap">
-                            {new Date(statement.dato).toDateString()}
-                        </td>
-                        <td class="px-3 py-5">
-                            {statement.innPaaKonto}
-                        </td>
-                        <td class="px-3 py-5">
-                            {statement.utFraKonto}
-                        </td>
-                        <td class="px-3 py-5">
-                            {statement.tekst}
-                        </td>
-                        <td class="px-3 py-5">
-                            {statement.hovedkategori}
-                        </td>
-                        <td class="px-3 py-5">
-                            {statement.underkategori}
-                        </td>
-                        <td class="px-5 py-5">
-                            <button onclick={() => [editStatementModal = true, selectedStatement = statement, mainCategoryValue = statement.hovedkategori, subCategoryValue = statement.underkategori]} class=" flex text-nowrap font-bold cursor-pointer">
-                                <Edit color="darkNeutral" size="small" />
-                            </button>
-                        </td>
-                        <td class="px-5 py-5">
-                            <button 
-                                onclick={() => [confirmDeleteStatementModal = true, selectedStatement = statement]}
-                                class=" flex text-nowrap font-bold cursor-pointer">
-                                <Delete color="darkNeutral" size="small"/>
-                            </button>
-                        </td>
-                    </tr>
-                {/each}
+                {#if accountStatementsCount && accountStatementsCount[0].count > 0}
+                    {#each { length: accountStatementsCount[0].count - (perPageNumber * paginationNumber + 1) >= perPageNumber ? perPageNumber : accountStatementsCount[0].count - (perPageNumber * paginationNumber + 1) + 1 }, i}
+                        <tr class=" border-b bg-neutral-900 border-neutral-800 text-xs text-neutral-400">
+                            <th scope="col" class="px-6 py-5">
+                                <input bind:group={selectedStatements} value={accountStatements[i].statementId} checked={selectedStatements.includes(accountStatements[i].statementId)} type="checkbox" name="checkbox" id="checkbox" class=" cursor-pointer w-4 h-4 bg-neutral-700 border border-neutral-600 rounded-sm focus:ring-0"/>
+                            </th>
+                            <td class="px-3 py-5 text-nowrap">
+                                {accountStatements[i].dato}
+                            </td>
+                            <td class="px-3 py-5">
+                                {accountStatements[i].innPaaKonto}
+                            </td>
+                            <td class="px-3 py-5">
+                                {accountStatements[i].utFraKonto}
+                            </td>
+                            <td class="px-3 py-5 text-nowrap ">
+                                {accountStatements[i].tekst?.slice(0, 19) + "..."}
+                            </td>
+                            <td class="px-3 py-5">
+                                {accountStatements[i].hovedkategori}
+                            </td>
+                            <td class="px-3 py-5">
+                                {accountStatements[i].underkategori}
+                            </td>
+                            <td class="px-5 py-5">
+                                <button onclick={() => [editStatementModal = true, selectedStatement = accountStatements[i], mainCategoryValue = accountStatements[i].hovedkategori, subCategoryValue = accountStatements[i].underkategori]} class=" flex text-nowrap font-bold cursor-pointer">
+                                    <Edit color="darkNeutral" size="small" />
+                                </button>
+                            </td>
+                            <td class="px-5 py-5">
+                                <button 
+                                    onclick={() => [confirmDeleteStatementModal = true, selectedStatement = accountStatements[i]]}
+                                    class=" flex text-nowrap font-bold cursor-pointer">
+                                    <Delete color="darkNeutral" size="small"/>
+                                </button>
+                            </td>
+                        </tr>
+                    {/each}
+                {/if}
             </tbody>
         </table>
-        <div>
-
+        <div class=" flex justify-between h-14 items-center p-4 bg-neutral-950">
+            <p class=" text-xs text-neutral-400">Showing <span class=" font-bold text-neutral-200 underline">{perPageNumber * paginationNumber + 1} - {perPageNumber * paginationNumber + perPageNumber > accountStatementsCount[0].count ? accountStatementsCount[0].count : perPageNumber * paginationNumber + perPageNumber}</span> account statements of <span class=" font-bold text-neutral-200">{accountStatementsCount[0].count}</span></p>
+            <div class=" h-full flex items-center">
+                <button disabled={ paginationNumber === 0 } onclick={() => pagination(paginationNumber - 1) } class=" rotate-90 active:scale-95 cursor-pointer p-2">
+                    <ArrowDown color={ paginationNumber === 0 ? "darkNeutral" : "neutral" } />
+                </button> 
+                <div class=" flex gap-1">
+                    {#each { length: Math.ceil(accountStatementsCount[0].count / perPageNumber) }, i}
+                        <button onclick={() => pagination(i)} class=" px-2.5 py-1 font-medium border border-neutral-700 rounded-md cursor-pointer active:scale-95 text-sm">{i + 1}</button>
+                    {/each}
+                </div>
+                <button disabled={ perPageNumber * paginationNumber + perPageNumber >= accountStatementsCount[0].count } onclick={() => pagination(paginationNumber + 1)} class=" rotate-90 active:scale-95 cursor-pointer p-2">
+                    <ArrowUp color={ perPageNumber * paginationNumber + perPageNumber >= accountStatementsCount[0].count ? "darkNeutral" : "neutral" }  />
+                </button>
+            </div>
         </div>
     </div>
 </div>
