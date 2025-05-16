@@ -44,7 +44,7 @@
 </script>
 
 <main class=" w-full flex flex-col items-center bg-neutral-800 h-full">
-	<div class=" flex flex-col gap-20 my-20 px-12 items-center z-0 w-full max-w-[1100px]">
+	<div class=" flex flex-col gap-20 mt-20 mb-60 px-12 items-center z-0 w-full max-w-[1100px]">
 		<div use:clickOutside={() => uploadModal = false} class=" w-full flex justify-between items-center">
 			<p class=" text-4xl font-bold ">Dashboard</p>
 			<button onclick={() => uploadModal = true} class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 flex gap-2 items-center hover:bg-blue-800">

@@ -32,6 +32,7 @@
 
     let paginationNumber = $state(1000000)
     let perPageNumber = $state(20)
+    let perPageFocused = $state(false)
 
     onMount(() => {
         currentSortParam = new URLSearchParams(window.location.search).get("sortBy")
@@ -68,6 +69,15 @@
         paginationNumber = newPaginationNumber
         const params = new URLSearchParams(window.location.search);
         params.set('page', newPaginationNumber.toString());
+        goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
+    }
+
+    function setPerPage(newPerPageNumber: number) {
+        paginationNumber = 0
+        perPageNumber = newPerPageNumber
+        const params = new URLSearchParams(window.location.search);
+        params.set('perPage', newPerPageNumber.toString());
+        params.set('page', "0");
         goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
     }
 
@@ -342,8 +352,26 @@
             <div class=" h-full flex items-center">
                 <!-- TODO: Add dropdown to select how many to show per page -->
                  <!-- Use the perPageNumber variable and the url param "perPage" -->
-                <div>
-
+                <div class=" mr-5">
+                    <div class=" w-full " use:clickOutside={() => perPageFocused = false}>
+                        <button id="underkategori" onclick={() => [perPageFocused = !perPageFocused]} class=" flex items-center justify-center text-xs cursor-pointer border h-8 w-32 rounded-md border-neutral-700">Show <span class=" font-bold mx-1">{perPageNumber === accountStatementsCount[0].count ? "all" : perPageNumber}</span> rows <span class=" ml-1"><ArrowDown /></span></button>
+                        {#if perPageFocused}
+                            <div class=" absolute z-50 bg-neutral-950 rounded-lg  font-medium text-sm border border-neutral-700 mt-2 w-32">
+                                <button type="button" onclick={() => [perPageFocused = false, setPerPage(20)]} class=" p-2 w-full h-full cursor-pointer flex flex-start hover:bg-neutral-900 rounded-lg">
+                                    20
+                                </button>
+                                <button type="button" onclick={() => [perPageFocused = false, setPerPage(50)]} class=" p-2 w-full h-full cursor-pointer flex flex-start hover:bg-neutral-900 rounded-lg">
+                                    50
+                                </button>
+                                <button type="button" onclick={() => [perPageFocused = false, setPerPage(100)]} class=" p-2 w-full h-full cursor-pointer flex flex-start hover:bg-neutral-900 rounded-lg">
+                                    100
+                                </button>
+                                <button type="button" onclick={() => [perPageFocused = false, setPerPage(accountStatementsCount[0].count)]} class=" p-2 w-full h-full cursor-pointer flex flex-start hover:bg-neutral-900 rounded-lg">
+                                    all
+                                </button>
+                            </div>
+                        {/if}
+                    </div>
                 </div>
                 <!-- Pagination -->
                 <button disabled={ paginationNumber === 0 } onclick={() => pagination(paginationNumber - 1) } class=" h-8 w-8 flex items-center justify-center rotate-90 active:scale-95 {paginationNumber !== 0 ? "hover:bg-neutral-900 cursor-pointer rounded-md" : ""}">
@@ -352,7 +380,7 @@
                 <div class=" flex">
                     {#if Math.ceil(accountStatementsCount[0].count / perPageNumber) <= 7}
                         {#each { length: Math.ceil(accountStatementsCount[0].count / perPageNumber) }, i }
-                            <button onclick={() => pagination(i)} class=" h-8 w-8 flex justify-center items-center font-medium border border-neutral-700 rounded-md cursor-pointer active:scale-95 text-sm">{i + 1}</button>
+                            <button onclick={() => pagination(i)} class=" h-8 w-8 flex justify-center items-center font-medium rounded-md cursor-pointer active:scale-95 text-sm { paginationNumber === i ? " border border-neutral-700" : " hover:bg-neutral-900"}">{i + 1}</button>
                         {/each}
                     {:else}
                         <button 
