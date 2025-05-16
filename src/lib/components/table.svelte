@@ -10,6 +10,7 @@
 	import ArrowUp from "./icons/arrowUp.svelte";
 	import { onMount } from "svelte";
 	import Calendar from "./icons/calendar.svelte";
+	import More from "./icons/more.svelte";
 
     const { accountStatements, statistics, accountStatementsCount }: { accountStatements: accountStatementFormat[], statistics: any, accountStatementsCount: any} = $props()
 
@@ -344,16 +345,64 @@
                 <div>
 
                 </div>
-                <button disabled={ paginationNumber === 0 } onclick={() => pagination(paginationNumber - 1) } class=" rotate-90 active:scale-95 cursor-pointer p-2">
+                <!-- Pagination -->
+                <button disabled={ paginationNumber === 0 } onclick={() => pagination(paginationNumber - 1) } class=" h-8 w-8 flex items-center justify-center rotate-90 active:scale-95 {paginationNumber !== 0 ? "hover:bg-neutral-900 cursor-pointer rounded-md" : ""}">
                     <ArrowDown color={ paginationNumber === 0 ? "darkNeutral" : "neutral" } />
                 </button>
-                <!-- Add functionality for better pagination buttons so that they range from 1,2,3, ..., 7 -->
-                <div class=" flex gap-1">
-                    {#each { length: Math.ceil(accountStatementsCount[0].count / perPageNumber) }, i}
-                        <button onclick={() => pagination(i)} class=" px-2.5 py-1 font-medium border border-neutral-700 rounded-md cursor-pointer active:scale-95 text-sm">{i + 1}</button>
-                    {/each}
+                <div class=" flex">
+                    {#if Math.ceil(accountStatementsCount[0].count / perPageNumber) <= 7}
+                        {#each { length: Math.ceil(accountStatementsCount[0].count / perPageNumber) }, i }
+                            <button onclick={() => pagination(i)} class=" h-8 w-8 flex justify-center items-center font-medium border border-neutral-700 rounded-md cursor-pointer active:scale-95 text-sm">{i + 1}</button>
+                        {/each}
+                    {:else}
+                        <button 
+                            onclick={() => pagination(0)} 
+                            class=" h-8 w-8 flex justify-center items-center font-medium cursor-pointer active:scale-95 text-sm rounded-md {paginationNumber === 0 ? " border border-neutral-700" : "hover:bg-neutral-900" }">
+                            1
+                        </button>
+                        <button 
+                            disabled={ paginationNumber > 3 } 
+                            onclick={() => pagination(1)} 
+                            class=" h-8 w-8 flex justify-center items-center font-medium text-sm {paginationNumber > 3 ? "" : paginationNumber === 1 ? " active:scale-95 cursor-pointer border border-neutral-700 rounded-md" : " rounded-md hover:bg-neutral-900 active:scale-95 cursor-pointer"}">
+                            {#if paginationNumber > 3}
+                                <More />
+                            {:else}
+                                2
+                            {/if}
+                        </button>
+                        <button 
+                            onclick={() => pagination(paginationNumber <= 2 ? 2 : paginationNumber >= Math.ceil(accountStatementsCount[0].count / perPageNumber) - 4 ? Math.ceil(accountStatementsCount[0].count / perPageNumber) - 5 : paginationNumber - 1)} 
+                            class=" h-8 w-8 flex justify-center items-center font-medium rounded-md cursor-pointer active:scale-95 text-sm {paginationNumber === 2 ? " border border-neutral-700 " : " hover:bg-neutral-900"}">
+                            { paginationNumber <= 2  ? "3" : paginationNumber >= Math.ceil(accountStatementsCount[0].count / perPageNumber) - 4 ? Math.ceil(accountStatementsCount[0].count / perPageNumber) - 4 : paginationNumber }
+                        </button>
+                        <button 
+                            onclick={() => pagination(paginationNumber <= 2 ? 3 : paginationNumber >= Math.ceil(accountStatementsCount[0].count / perPageNumber) - 4 ? Math.ceil(accountStatementsCount[0].count / perPageNumber) - 4 : paginationNumber)} 
+                            class=" h-8 w-8 flex justify-center items-center font-medium rounded-md cursor-pointer active:scale-95 text-sm {paginationNumber < Math.ceil(accountStatementsCount[0].count / perPageNumber) - 3 && paginationNumber > 2 ? " border border-neutral-700" : "hover:bg-neutral-900"}">
+                            { paginationNumber <= 2 ? "4" : paginationNumber >= Math.ceil(accountStatementsCount[0].count / perPageNumber) - 4 ? Math.ceil(accountStatementsCount[0].count / perPageNumber) - 3 : paginationNumber + 1 }
+                        </button>
+                        <button 
+                            onclick={() => pagination(paginationNumber <= 2 ? 4 : paginationNumber >= Math.ceil(accountStatementsCount[0].count / perPageNumber) - 4 ? Math.ceil(accountStatementsCount[0].count / perPageNumber) - 3 : paginationNumber + 1)} 
+                            class=" h-8 w-8 flex justify-center items-center font-medium rounded-md cursor-pointer active:scale-95 text-sm {paginationNumber === Math.ceil(accountStatementsCount[0].count / perPageNumber) - 3 ? " border border-neutral-700" : " hover:bg-neutral-900"}">
+                            { paginationNumber <= 2 ? "5" : paginationNumber >= Math.ceil(accountStatementsCount[0].count / perPageNumber) - 4 ? Math.ceil(accountStatementsCount[0].count / perPageNumber) - 2 : paginationNumber + 2 }
+                        </button>
+                        <button 
+                            disabled={ paginationNumber < Math.ceil(accountStatementsCount[0].count / perPageNumber)-4 } 
+                            onclick={() => pagination(Math.ceil(accountStatementsCount[0].count / perPageNumber) - 2)} 
+                            class=" h-8 w-8 flex justify-center items-center font-medium text-sm { paginationNumber < Math.ceil(accountStatementsCount[0].count / perPageNumber)-4 ? "" : paginationNumber ===  Math.ceil(accountStatementsCount[0].count / perPageNumber)-2 ? "active:scale-95 cursor-pointer border border-neutral-700 rounded-md" : " active:scale-95 cursor-pointer rounded-md hover:bg-neutral-900" }">
+                            {#if paginationNumber < Math.ceil(accountStatementsCount[0].count / perPageNumber)-4}
+                                <More />
+                            {:else}
+                                {Math.ceil(accountStatementsCount[0].count / perPageNumber)-1}
+                            {/if}
+                        </button>
+                        <button 
+                            onclick={() => pagination(Math.ceil(accountStatementsCount[0].count / perPageNumber) - 1)} 
+                            class=" h-8 w-8 flex justify-center items-center font-medium rounded-md cursor-pointer active:scale-95 text-sm {paginationNumber === Math.ceil(accountStatementsCount[0].count / perPageNumber) - 1 ? " border border-neutral-700" : "hover:bg-neutral-900" }">
+                            {Math.ceil(accountStatementsCount[0].count / perPageNumber)}
+                        </button>
+                    {/if}
                 </div>
-                <button disabled={ perPageNumber * paginationNumber + perPageNumber >= accountStatementsCount[0].count } onclick={() => pagination(paginationNumber + 1)} class=" rotate-90 active:scale-95 cursor-pointer p-2">
+                <button disabled={ perPageNumber * paginationNumber + perPageNumber >= accountStatementsCount[0].count } onclick={() => pagination(paginationNumber + 1)} class=" h-8 w-8 flex items-center justify-center rotate-90 active:scale-95 {perPageNumber * paginationNumber + perPageNumber >= accountStatementsCount[0].count ? "" : "hover:bg-neutral-900 cursor-pointer rounded-md"}">
                     <ArrowUp color={ perPageNumber * paginationNumber + perPageNumber >= accountStatementsCount[0].count ? "darkNeutral" : "neutral" }  />
                 </button>
             </div>
