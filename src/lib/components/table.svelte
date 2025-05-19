@@ -11,6 +11,7 @@
 	import { onMount } from "svelte";
 	import Calendar from "./icons/calendar.svelte";
 	import More from "./icons/more.svelte";
+    import { Datepicker, P } from "flowbite-svelte";
 
     const { accountStatements, statistics, accountStatementsCount }: { accountStatements: accountStatementFormat[], statistics: any, accountStatementsCount: any} = $props()
 
@@ -33,6 +34,11 @@
     let paginationNumber = $state(1000000)
     let perPageNumber = $state(20)
     let perPageFocused = $state(false)
+
+    let dateRange: { from: Date | undefined; to: Date | undefined } = $state({
+        from: undefined,
+        to: undefined
+    });
 
     onMount(() => {
         currentSortParam = new URLSearchParams(window.location.search).get("sortBy")
@@ -197,7 +203,7 @@
         <div class=" w-full">
             <div class=" w-full flex justify-between">
                 <div class=" w-80 mb-5 group mt-2">
-                    <label for="search" class="mb-2 text-sm font-medium text-white flex gap-1">
+                    <label for="search" class="mb-2 text-sm font-medium  flex gap-1">
                         <Search />
                         Search
                     </label>
@@ -207,12 +213,12 @@
                     </div>
                 </div>
                 <!-- TODO: add a select between dates dropdown to select what dates the account statements should be between -->
-                <div class=" w-60 mb-5 group mt-2">
-                    <label for="text" class="mb-2 text-sm font-medium text-white flex gap-1">
+                <div class=" w-60 mb-5 group mt-2 flex flex-col">
+                    <label for="datepicker" class="mb-2 text-sm font-medium flex gap-1">
                         <Calendar />
-                        Pick Date
+                        Select date 
                     </label>
-                    <input disabled={true} type="text" id="text" name="text" class=" text-sm rounded-lg w-full p-2.5 bg-neutral-700 border-neutral-600 placeholder-neutral-400 text-white focus:ring-blue-500 focus:border-blue-500">
+                    <Datepicker inputClass=" bg-neutral-700 dark:bg-neutral-700 border-neutral-600 dark:border-neurtal-600" range bind:rangeFrom={dateRange.from} bind:rangeTo={dateRange.to} color="blue" />
                 </div>
             </div>
         </div>
@@ -350,8 +356,6 @@
         <div class=" flex justify-between h-14 items-center p-4 bg-neutral-950">
             <p class=" text-xs text-neutral-400">Showing <span class=" font-bold text-neutral-200 underline">{perPageNumber * paginationNumber + 1} - {perPageNumber * paginationNumber + perPageNumber > accountStatementsCount[0].count ? accountStatementsCount[0].count : perPageNumber * paginationNumber + perPageNumber}</span> account statements of <span class=" font-bold text-neutral-200">{accountStatementsCount[0].count}</span></p>
             <div class=" h-full flex items-center">
-                <!-- TODO: Add dropdown to select how many to show per page -->
-                 <!-- Use the perPageNumber variable and the url param "perPage" -->
                 <div class=" mr-5">
                     <div class=" w-full " use:clickOutside={() => perPageFocused = false}>
                         <button id="underkategori" onclick={() => [perPageFocused = !perPageFocused]} class=" flex items-center justify-center text-xs cursor-pointer border h-8 w-32 rounded-md border-neutral-700">Show <span class=" font-bold mx-1">{perPageNumber === accountStatementsCount[0].count ? "all" : perPageNumber}</span> rows <span class=" ml-1"><ArrowDown /></span></button>
