@@ -11,7 +11,8 @@
 	import { onMount } from "svelte";
 	import Calendar from "./icons/calendar.svelte";
 	import More from "./icons/more.svelte";
-    import { Datepicker, P } from "flowbite-svelte";
+    import { type DateOrRange } from "flowbite-svelte";
+	import CalendarComp from "./calendarComp.svelte";
 
     const { accountStatements, statistics, accountStatementsCount }: { accountStatements: accountStatementFormat[], statistics: any, accountStatementsCount: any} = $props()
 
@@ -41,11 +42,16 @@
     });
 
     onMount(() => {
-        currentSortParam = new URLSearchParams(window.location.search).get("sortBy")
-        currentDirParam = new URLSearchParams(window.location.search).get("sortDir")
-        searchValue = new URLSearchParams(window.location.search).get("search") ?? ""
-        paginationNumber = new URLSearchParams(window.location.search).get("page") ? Number(new URLSearchParams(window.location.search).get("page")) : 0
-        perPageNumber = new URLSearchParams(window.location.search).get("perPage") ? Number(new URLSearchParams(window.location.search).get("perPage")) : perPageNumber
+        const params = new URLSearchParams(window.location.search);
+        currentSortParam = params.get("sortBy")
+        currentDirParam = params.get("sortDir")
+        searchValue = params.get("search") ?? ""
+        paginationNumber = params.get("page") ? Number(params.get("page")) : 0
+        perPageNumber = params.get("perPage") ? Number(params.get("perPage")) : perPageNumber
+        const dateRangeFrom = params.get("dateRangeFrom");
+        dateRange.from = dateRangeFrom ? new Date(dateRangeFrom) : undefined;
+        const dateRangeTo = params.get("dateRangeTo");
+        dateRange.from = dateRangeTo ? new Date(dateRangeTo) : undefined;
     })
 
     function updateSort(col: SortKey) {
@@ -84,6 +90,19 @@
         const params = new URLSearchParams(window.location.search);
         params.set('perPage', newPerPageNumber.toString());
         params.set('page', "0");
+        goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
+    }
+
+    function handleDateSelect(detail: DateOrRange) {
+        const params = new URLSearchParams(window.location.search);
+        if (!dateRange.from || !dateRange.to) {
+            params.set('dateRangeFrom', "")
+            params.set('dateRangeTo', "")
+            goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
+            return;
+        };
+        params.set('dateRangeFrom', dateRange.from.toISOString())
+        params.set('dateRangeTo', dateRange.to.toISOString())
         goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
     }
 
@@ -218,7 +237,7 @@
                         <Calendar />
                         Select date 
                     </label>
-                    <Datepicker inputClass=" bg-neutral-700 dark:bg-neutral-700 border-neutral-600 dark:border-neurtal-600" range bind:rangeFrom={dateRange.from} bind:rangeTo={dateRange.to} color="blue" />
+                    <CalendarComp bind:rangeFrom={dateRange.from} bind:rangeTo={dateRange.to} onclear={handleDateSelect} onselect={handleDateSelect} />
                 </div>
             </div>
         </div>

@@ -4,7 +4,7 @@ import { Readable } from 'node:stream';
 import Papa from 'papaparse';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
-import { desc, eq, sql, asc, and, or, count } from 'drizzle-orm';
+import { desc, eq, sql, asc, and, or, count, lte, gte } from 'drizzle-orm';
 
 interface csvBulderFormat {
     Dato: string,
@@ -66,6 +66,8 @@ export const load: PageServerLoad = async (event) => {
     const search = url.searchParams.get('search') ?? null;
     const paginationNumber = url.searchParams.get('page') ? Number(url.searchParams.get('page')) : 0;
     const perPageNumber = url.searchParams.get('perPage') ? Number(url.searchParams.get('perPage')) : 20;
+    const dateRangeFrom = url.searchParams.get('dateRangeFrom') ?? null
+    const dateRangeTo = url.searchParams.get('dateRangeTo') ?? null
 
     const col = columnMap[sortBy]!;
     let sortOrder;

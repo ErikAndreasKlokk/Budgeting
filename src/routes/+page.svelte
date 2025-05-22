@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
     let welcomeMessage = "Welcome to Budgeting!";
     let description = "Track your income and expenses effortlessly.";
     let features = [
