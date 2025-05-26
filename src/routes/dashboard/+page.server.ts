@@ -66,8 +66,8 @@ export const load: PageServerLoad = async (event) => {
     const search = url.searchParams.get('search') ?? null;
     const paginationNumber = url.searchParams.get('page') ? Number(url.searchParams.get('page')) : 0;
     const perPageNumber = url.searchParams.get('perPage') ? Number(url.searchParams.get('perPage')) : 20;
-    const dateRangeFrom = url.searchParams.get('dateRangeFrom') ?? null
-    const dateRangeTo = url.searchParams.get('dateRangeTo') ?? null
+    const dateRangeFrom = url.searchParams.get('dateRangeFrom') ? new Date(url.searchParams.get('dateRangeFrom')!) : null
+    const dateRangeTo = url.searchParams.get('dateRangeTo') ? new Date(url.searchParams.get('dateRangeTo')!) : null
 
     const col = columnMap[sortBy]!;
     let sortOrder;

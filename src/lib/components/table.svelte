@@ -11,7 +11,6 @@
 	import { onMount } from "svelte";
 	import Calendar from "./icons/calendar.svelte";
 	import More from "./icons/more.svelte";
-    import { type DateOrRange } from "flowbite-svelte";
 	import CalendarComp from "./calendarComp.svelte";
 
     const { accountStatements, statistics, accountStatementsCount }: { accountStatements: accountStatementFormat[], statistics: any, accountStatementsCount: any} = $props()
@@ -93,7 +92,7 @@
         goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
     }
 
-    function handleDateSelect(detail: DateOrRange) {
+    function handleDateSelect() {
         const params = new URLSearchParams(window.location.search);
         if (!dateRange.from || !dateRange.to) {
             params.set('dateRangeFrom', "")
@@ -227,8 +226,8 @@
                         Search
                     </label>
                     <div class=" flex">
-                        <input bind:value={searchValue} type="text" id="search" name="search" class=" text-sm rounded-l-lg w-full p-2.5 bg-neutral-700 border border-neutral-600 placeholder-neutral-400 focus:ring-blue-500 focus:border-blue-500">
-                        <button onclick={() => searchFunc(searchValue)} class=" text-sm rounded-r-lg p-2.5 bg-neutral-700 border border-neutral-600 cursor-pointer"><Search /></button>
+                        <input bind:value={searchValue} type="text" id="search" name="search" class=" text-sm rounded-l-lg w-full p-2.5 bg-neutral-900 border border-neutral-700 placeholder-neutral-400 focus:ring-blue-500 focus:border-blue-500">
+                        <button onclick={() => searchFunc(searchValue)} class=" text-sm rounded-r-lg p-2.5 bg-neutral-800 border-r border-y border-neutral-700 cursor-pointer"><Search /></button>
                     </div>
                 </div>
                 <!-- TODO: add a select between dates dropdown to select what dates the account statements should be between -->
@@ -246,7 +245,7 @@
     <!-- Table of account statements -->
     <!-- --------------------------- -->
     <div class=" rounded-xl bg-neutral-900 overflow-x-auto ">
-        <table class="w-full text-sm text-left rounded-4xl">
+        <table class="w-full text-sm text-left ">
             <thead class="text-xs uppercase bg-neutral-950  text-nowrap">
                 <tr>
                     <th class="px-6 py-5">
@@ -333,7 +332,7 @@
             <tbody>
                 {#if accountStatementsCount && accountStatementsCount[0].count > 0}
                     {#each { length: accountStatementsCount[0].count - (perPageNumber * paginationNumber + 1) >= perPageNumber ? perPageNumber : accountStatementsCount[0].count - (perPageNumber * paginationNumber + 1) + 1 }, i}
-                        <tr class=" border-b bg-neutral-900 border-neutral-800 text-xs text-neutral-400">
+                        <tr class=" border-y border-x bg-neutral-900 border-neutral-800 text-xs text-neutral-300">
                             <th scope="col" class="px-6 py-5">
                                 <input bind:group={selectedStatements} value={accountStatements[i].statementId} checked={selectedStatements.includes(accountStatements[i].statementId)} type="checkbox" name="checkbox" id="checkbox" class=" cursor-pointer w-4 h-4 bg-neutral-700 border border-neutral-600 rounded-sm focus:ring-0"/>
                             </th>

@@ -43,7 +43,7 @@
 
 </script>
 
-<main class=" w-full flex flex-col items-center bg-neutral-800 h-full">
+<main class=" w-full flex flex-col items-center bg-neutral-900 h-full">
 	<div class=" flex flex-col gap-20 mt-20 mb-60 px-12 items-center z-0 w-full max-w-[1100px]">
 		<div use:clickOutside={() => uploadModal = false} class=" w-full flex justify-between items-center">
 			<p class=" text-4xl font-bold ">Dashboard</p>
@@ -103,7 +103,7 @@
 				<!-- ---------------- -->
 				<!-- Money spent card -->
 				<!-- ---------------- -->
-				<div class=" w-full rounded-2xl h-[600px] bg-neutral-900 flex flex-col p-10">
+				<div class=" w-full rounded-2xl h-[600px] flex flex-col p-10 border border-neutral-800 shadow-lg shadow-neutral-800">
 					<div class=" mb-9">
 						<p class=" text-4xl font-bold ">Money spent</p>
 						<!-- TODO: add functionality for choosing what dates to show data from -->
@@ -113,7 +113,7 @@
 						</button>
 					</div>
 					{#if statistics?.kategoriData.length !== 0}
-						<div class="h-[300px] p-4 overflow-auto relative w-full mb-9">
+						<div class="h-[310px] p-4 overflow-auto relative w-full mb-9">
 							<Chart data={statistics?.kategoriData} x="moneyOut" c="hovedkategori" cRange={keyColors} let:tooltip>
 								<Svg center>
 									<Pie outerRadius={100} innerRadius={80} {tooltip} padAngle={0.02}/>
@@ -154,7 +154,7 @@
 				<!-- ----------------- -->
 				<!-- Money earned card -->
 				<!-- ----------------- -->
-				<div class=" w-full rounded-2xl h-[600px] bg-neutral-900 flex flex-col p-10">
+				<div class=" w-full rounded-2xl h-[600px] flex flex-col p-10 border border-neutral-800 shadow-lg shadow-neutral-800">
 					<div class=" mb-9">
 						<p class=" text-4xl font-bold ">Money earned</p>
 						<button class=" flex items-center text-neutral-400 italic cursor-pointer mt-1">
@@ -164,7 +164,7 @@
 						</button>
 					</div>
 					{#if statistics?.kategoriData.length !== 0 && statistics?.moneyIn !== undefined && statistics?.moneyOut !== undefined}
-						<div class="h-[300px] p-4 relative w-full mb-9 overflow-hidden">
+						<div class="h-[310px] p-4 relative w-full mb-9 overflow-hidden">
 							<Chart data={[{value: statistics?.moneyIn - statistics?.moneyOut, label: "Money left to spend"}, {value: statistics?.moneyOut, label: "Money spent"}]} x="value" c="value" cRange={statistics?.moneyIn - statistics?.moneyOut < 0 ? ["#320801", "#ff2222"] : ["#013220", "#00B86B"]} let:tooltip>
 								<Svg center>
 									<Pie outerRadius={100} innerRadius={80} {tooltip}/>

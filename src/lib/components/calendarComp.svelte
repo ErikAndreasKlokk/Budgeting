@@ -174,9 +174,9 @@
 
 <div bind:this={datepickerContainerElement} class=" mt-1 w-full max-w-60">
   <div class=" flex">
-    <input bind:this={inputElement} type="text" class="text-sm rounded-l-lg w-full p-2.5 border-r-0 border-neutral-600 bg-neutral-700 placeholder-neutral-400 focus:ring-blue-500 focus:border-blue-500 {rangeTo ? "" : " rounded-r-lg border-r-1 "} " {placeholder} value={range ? `${formatDate(rangeFrom)} - ${formatDate(rangeTo)}` : formatDate(value)} onfocus={() => (isOpen = true)} oninput={handleInputChange} onkeydown={handleInputKeydown} {disabled} {required} aria-haspopup="dialog" />
+    <input bind:this={inputElement} type="text" class="text-sm rounded-l-lg w-full p-2.5 border-r-0 border-neutral-700 bg-neutral-900 placeholder-neutral-400 focus:ring-blue-500 focus:border-blue-500 {rangeTo ? "" : " rounded-r-lg border-r-1 "} " {placeholder} value={range ? `${formatDate(rangeFrom)} - ${formatDate(rangeTo)}` : formatDate(value)} onfocus={() => (isOpen = true)} oninput={handleInputChange} onkeydown={handleInputKeydown} {disabled} {required} aria-haspopup="dialog" />
     {#if rangeTo}
-      <button onclick={handleClear} class=" flex justify-center items-center right-0 w-12 cursor-pointer bg-neutral-700 rounded-r-lg border-r border-y border-neutral-600 ">
+      <button onclick={handleClear} class=" flex justify-center items-center right-0 w-12 cursor-pointer bg-neutral-900 rounded-r-lg border-r border-y border-neutral-700 ">
         <Close />
       </button>
     {/if}
@@ -196,7 +196,7 @@
         {/each}
         {#each daysInMonth as day}
           {@const current = day.getMonth() !== currentMonth.getMonth()}
-          <button class="{isSelected(day) ? " bg-neutral-600" : ""} {isInRange(day) ? "bg-neutral-800" : ""} h-7 w-full hover:bg-neutral-700 flex-1 leading-9 border-0 rounded-md cursor-pointer text-center font-semibold text-sm flex justify-center items-center" onclick={() => handleDaySelect(day)} onkeydown={handleCalendarKeydown} aria-label={day.toLocaleDateString(locale, { weekday: "long", year: "numeric", month: "long", day: "numeric" })} aria-selected={isSelected(day)} role="gridcell">
+          <button class="{isSelected(day) ? " bg-neutral-600" : ""} {isInRange(day) ? "bg-neutral-800" : ""} { isToday(day) ? " bg-blue-600/60" : ""} h-7 w-full hover:bg-neutral-700 flex-1 leading-9 border-0 rounded-md cursor-pointer text-center font-semibold text-sm flex justify-center items-center" onclick={() => handleDaySelect(day)} onkeydown={handleCalendarKeydown} aria-label={day.toLocaleDateString(locale, { weekday: "long", year: "numeric", month: "long", day: "numeric" })} aria-selected={isSelected(day)} role="gridcell">
             {day.getDate()}
           </button>
         {/each}

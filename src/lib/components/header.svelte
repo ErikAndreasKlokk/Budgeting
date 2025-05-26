@@ -8,8 +8,8 @@
     let { user } = $props()
 </script>
 
-<header class=" min-w-60 flex flex-col items-center relative bg-neutral-900">
-    <a href="/" class=" mt-10"><img class=" h-12" src="/2.png" alt=""></a>
+<header class=" min-w-60 flex flex-col items-center relative bg-neutral-900 border-r border-neutral-700">
+    <a href="/" class=" mt-10"><img class=" h-12" src="/2.png" alt="Logo"></a>
     <div class=" mt-20 w-40">
         <a href="/" class=" cursor-pointer flex items-center my-3 underline text-xl font-medium gap-1">
             <Home />
