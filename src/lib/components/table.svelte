@@ -31,7 +31,7 @@
     let currentDirParam = $state();
     let searchValue = $state("")
 
-    let paginationNumber = $state(1000000)
+    let paginationNumber = $state(10000000)
     let perPageNumber = $state(20)
     let perPageFocused = $state(false)
 
@@ -50,7 +50,7 @@
         const dateRangeFrom = params.get("dateRangeFrom");
         dateRange.from = dateRangeFrom ? new Date(dateRangeFrom) : undefined;
         const dateRangeTo = params.get("dateRangeTo");
-        dateRange.from = dateRangeTo ? new Date(dateRangeTo) : undefined;
+        dateRange.to = dateRangeTo ? new Date(dateRangeTo) : undefined;
     })
 
     function updateSort(col: SortKey) {
@@ -100,8 +100,11 @@
             goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
             return;
         };
-        params.set('dateRangeFrom', dateRange.from.toISOString())
-        params.set('dateRangeTo', dateRange.to.toISOString())
+        params.set('dateRangeFrom', new Date(dateRange.from.setDate(dateRange.from.getDate() + 1)).toISOString().slice(0, 10))
+        params.set('dateRangeTo', new Date(dateRange.to.setDate(dateRange.to.getDate() + 1)).toISOString().slice(0, 10))
+
+        dateRange.from.setDate(dateRange.from.getDate() - 1)
+        dateRange.to.setDate(dateRange.to.getDate() - 1)
         goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
     }
 
@@ -337,7 +340,7 @@
                                 <input bind:group={selectedStatements} value={accountStatements[i].statementId} checked={selectedStatements.includes(accountStatements[i].statementId)} type="checkbox" name="checkbox" id="checkbox" class=" cursor-pointer w-4 h-4 bg-neutral-700 border border-neutral-600 rounded-sm focus:ring-0"/>
                             </th>
                             <td class="px-3 py-5 text-nowrap">
-                                {accountStatements[i].dato}
+                                {accountStatements[i].dato.toString().slice(4,16)}
                             </td>
                             <td class="px-3 py-5">
                                 {accountStatements[i].innPaaKonto}

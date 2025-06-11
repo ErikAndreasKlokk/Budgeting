@@ -23,7 +23,7 @@ interface csvBulderFormat {
 
 export interface accountStatementFormat {
     statementId: number,
-    dato: string,
+    dato: Date,
     innPaaKonto: string | null,
     utFraKonto: string | null,
     type: string | null,
@@ -91,20 +91,28 @@ export const load: PageServerLoad = async (event) => {
     })
     .from(table.accountStatements)
     .where(
-        search ?
-            and(
-                eq(table.accountStatements.userId, event.locals.user.id),
-                or(
-                    sql`LOWER(${table.accountStatements.dato}) LIKE LOWER(${`%${search}%`})`,
-                    sql`LOWER(${table.accountStatements.innPaaKonto}) LIKE LOWER(${`%${search}%`})`,
-                    sql`LOWER(${table.accountStatements.utFraKonto}) LIKE LOWER(${`%${search}%`})`,
-                    sql`LOWER(${table.accountStatements.tekst}) LIKE LOWER(${`%${search}%`})`,
-                    sql`LOWER(${table.accountStatements.hovedkategori}) LIKE LOWER(${`%${search}%`})`,
-                    sql`LOWER(${table.accountStatements.underkategori}) LIKE LOWER(${`%${search}%`})`
-                )
-            )
-            :
-            eq(table.accountStatements.userId, event.locals.user.id)
+        and(
+            eq(table.accountStatements.userId, event.locals.user.id),
+
+            search ? or(
+                        sql`LOWER(${table.accountStatements.dato}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.innPaaKonto}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.utFraKonto}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.tekst}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.hovedkategori}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.underkategori}) LIKE LOWER(${`%${search}%`})`
+                    ) 
+            : eq(table.accountStatements.userId, event.locals.user.id),
+
+            dateRangeTo && dateRangeFrom ?
+            lte(table.accountStatements.dato, dateRangeTo)
+            : eq(table.accountStatements.userId, event.locals.user.id),
+
+            dateRangeTo && dateRangeFrom ?
+            gte(table.accountStatements.dato, dateRangeFrom)
+            : eq(table.accountStatements.userId, event.locals.user.id),
+
+        )
     )
     .orderBy(sortOrder)
     .limit(perPageNumber)
@@ -113,20 +121,28 @@ export const load: PageServerLoad = async (event) => {
     const accountStatementsCount = db.select({ count: count() })
     .from(table.accountStatements)
     .where(
-        search ?
-            and(
-                eq(table.accountStatements.userId, event.locals.user.id),
-                or(
-                    sql`LOWER(${table.accountStatements.dato}) LIKE LOWER(${`%${search}%`})`,
-                    sql`LOWER(${table.accountStatements.innPaaKonto}) LIKE LOWER(${`%${search}%`})`,
-                    sql`LOWER(${table.accountStatements.utFraKonto}) LIKE LOWER(${`%${search}%`})`,
-                    sql`LOWER(${table.accountStatements.tekst}) LIKE LOWER(${`%${search}%`})`,
-                    sql`LOWER(${table.accountStatements.hovedkategori}) LIKE LOWER(${`%${search}%`})`,
-                    sql`LOWER(${table.accountStatements.underkategori}) LIKE LOWER(${`%${search}%`})`
-                )
-            )
-            :
-            eq(table.accountStatements.userId, event.locals.user.id)
+         and(
+            eq(table.accountStatements.userId, event.locals.user.id),
+
+            search ? or(
+                        sql`LOWER(${table.accountStatements.dato}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.innPaaKonto}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.utFraKonto}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.tekst}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.hovedkategori}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(${table.accountStatements.underkategori}) LIKE LOWER(${`%${search}%`})`
+                    ) 
+            : eq(table.accountStatements.userId, event.locals.user.id),
+            
+            dateRangeTo && dateRangeFrom ?
+            lte(table.accountStatements.dato, dateRangeTo)
+            : eq(table.accountStatements.userId, event.locals.user.id),
+
+            dateRangeTo && dateRangeFrom ?
+            gte(table.accountStatements.dato, dateRangeFrom)
+            : eq(table.accountStatements.userId, event.locals.user.id),
+
+        )
     )
 
     const hovedkategorier: string[] = []
@@ -257,7 +273,7 @@ export const actions: Actions = {
                     dato: table.accountStatements.dato
                 }).from(table.accountStatements).where(sql`
                     ${table.accountStatements.userId}             = ${event.locals.user.id}
-                    and ${table.accountStatements.dato}           = ${line.Dato} 
+                    and ${table.accountStatements.dato}           = ${new Date(line.Dato).toISOString()} 
                     and ${table.accountStatements.innPaaKonto}    = ${line['Inn på konto']}
                     and ${table.accountStatements.utFraKonto}     = ${line['Ut fra konto']}
                     and ${table.accountStatements.tilKonto}       = ${line['Til konto']}
@@ -275,7 +291,7 @@ export const actions: Actions = {
                 
                 await db.insert(table.accountStatements).values({
                     userId: event.locals.user.id,
-                    dato: line.Dato,
+                    dato: new Date(line.Dato),
                     innPaaKonto: line['Inn på konto'],
                     utFraKonto: line['Ut fra konto'],
                     tilKonto: line['Til konto'],

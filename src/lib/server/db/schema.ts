@@ -11,7 +11,7 @@ export const accountStatements = sqliteTable('accountStatements', {
 	userId: text('user_id')
 		.notNull()
 		.references(() => user.id),
-	dato: text().notNull(),
+	dato: integer({ mode: 'timestamp' }).notNull(),
 	innPaaKonto: text(),
 	utFraKonto: text(),
 	tilKonto: text(),

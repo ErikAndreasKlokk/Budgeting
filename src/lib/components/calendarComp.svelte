@@ -68,23 +68,17 @@
   }
 
   function handleDaySelect(day: Date) {
-    if (range) {
-      if (!rangeFrom || (rangeFrom && rangeTo)) {
-        rangeFrom = day;
-        rangeTo = undefined;
-      } else if (day < rangeFrom) {
-        rangeFrom = day;
-        rangeTo = undefined;
-      } else {
-        rangeTo = day;
-        isOpen = false
-      }
-      onselect?.({ from: rangeFrom, to: rangeTo });
+    if (!rangeFrom || (rangeFrom && rangeTo)) {
+      rangeFrom = day;
+      rangeTo = undefined;
+    } else if (day < rangeFrom) {
+      rangeFrom = day;
+      rangeTo = undefined;
     } else {
-      value = day;
-      onselect?.(value);
-      if (autohide && !inline) isOpen = false;
+      rangeTo = day;
+      isOpen = false
     }
+    onselect?.({ from: rangeFrom, to: rangeTo });
   }
 
   function handleInputChange() {
@@ -116,19 +110,19 @@
 
     switch (event.key) {
       case "ArrowLeft":
-        focusedDate = addDay(focusedDate, -1);
+        focusedDate = addDay(focusedDate!, -1);
         break;
       case "ArrowRight":
-        focusedDate = addDay(focusedDate, 1);
+        focusedDate = addDay(focusedDate!, 1);
         break;
       case "ArrowUp":
-        focusedDate = addDay(focusedDate, -7);
+        focusedDate = addDay(focusedDate!, -7);
         break;
       case "ArrowDown":
-        focusedDate = addDay(focusedDate, 7);
+        focusedDate = addDay(focusedDate!, 7);
         break;
       case "Enter":
-        handleDaySelect(focusedDate);
+        handleDaySelect(focusedDate!);
         break;
       case "Escape":
         isOpen = false;
@@ -139,8 +133,8 @@
     }
 
     event.preventDefault();
-    if (focusedDate.getMonth() !== currentMonth.getMonth()) {
-      currentMonth = new Date(focusedDate.getFullYear(), focusedDate.getMonth(), 1);
+    if (focusedDate!.getMonth() !== currentMonth.getMonth()) {
+      currentMonth = new Date(focusedDate!.getFullYear(), focusedDate!.getMonth(), 1);
     }
 
     // Focus the button for the focused date

@@ -222,7 +222,7 @@
 					<Table {accountStatements} statistics={data.statistics} {accountStatementsCount} />
 				{/await}
 			{:else}
-				<TableSkeleton />
+				<Table accountStatements={[]} statistics={{}} accountStatementsCount={data.accountStatementsCount} />
 			{/if}
 		{/await}
 	</div>
