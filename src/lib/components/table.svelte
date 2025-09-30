@@ -11,7 +11,7 @@
 	import { onMount } from "svelte";
 	import Calendar from "./icons/calendar.svelte";
 	import More from "./icons/more.svelte";
-	import CalendarComp from "./calendarComp.svelte";
+	import CalendarInput from "./calendarInput.svelte";
 
     const { accountStatements, statistics, accountStatementsCount }: { accountStatements: accountStatementFormat[], statistics: any, accountStatementsCount: any} = $props()
 
@@ -95,13 +95,13 @@
     function handleDateSelect() {
         const params = new URLSearchParams(window.location.search);
         if (!dateRange.from || !dateRange.to) {
-            params.set('dateRangeFrom', "")
-            params.set('dateRangeTo', "")
+            params.set('tableDateRangeFrom', "")
+            params.set('tableDateRangeTo', "")
             goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
             return;
         };
-        params.set('dateRangeFrom', new Date(dateRange.from.setDate(dateRange.from.getDate() + 1)).toISOString().slice(0, 10))
-        params.set('dateRangeTo', new Date(dateRange.to.setDate(dateRange.to.getDate() + 1)).toISOString().slice(0, 10))
+        params.set('tableDateRangeFrom', new Date(dateRange.from.setDate(dateRange.from.getDate() + 1)).toISOString().slice(0, 10))
+        params.set('tableDateRangeTo', new Date(dateRange.to.setDate(dateRange.to.getDate() + 1)).toISOString().slice(0, 10))
 
         dateRange.from.setDate(dateRange.from.getDate() - 1)
         dateRange.to.setDate(dateRange.to.getDate() - 1)
@@ -239,7 +239,7 @@
                         <Calendar />
                         Select date 
                     </label>
-                    <CalendarComp bind:rangeFrom={dateRange.from} bind:rangeTo={dateRange.to} onclear={handleDateSelect} onselect={handleDateSelect} />
+                    <CalendarInput bind:rangeFrom={dateRange.from} bind:rangeTo={dateRange.to} onclear={handleDateSelect} onselect={handleDateSelect} />
                 </div>
             </div>
         </div>
@@ -333,7 +333,7 @@
                 </tr>
             </thead>
             <tbody>
-                {#if accountStatementsCount && accountStatementsCount[0].count > 0}
+                {#if accountStatementsCount && accountStatementsCount[0] && accountStatementsCount[0].count > 0}
                     {#each { length: accountStatementsCount[0].count - (perPageNumber * paginationNumber + 1) >= perPageNumber ? perPageNumber : accountStatementsCount[0].count - (perPageNumber * paginationNumber + 1) + 1 }, i}
                         <tr class=" border-y border-x bg-neutral-900 border-neutral-800 text-xs text-neutral-300">
                             <th scope="col" class="px-6 py-5">

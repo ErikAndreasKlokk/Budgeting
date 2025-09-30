@@ -9,10 +9,18 @@
 	import CloudUpload from '$lib/components/icons/cloudUpload.svelte';
 	import ArrowDown from '$lib/components/icons/arrowDown.svelte';
 	import Leaderboard from '$lib/components/icons/leaderboard.svelte';
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
+	import CalendarButton from '$lib/components/calendarButton.svelte';
 
 	let uploadModal = $state(false)
 	let file: FileList | null | undefined = $state(null)
+	const todaysDate = new Date();
+
+
+	let dateRange: { from: Date | undefined; to: Date | undefined } = $state({
+        from: new Date(todaysDate.getFullYear(), todaysDate.getMonth() - 1, todaysDate.getDate()),
+        to: todaysDate
+    });
 	
 	let { data, form }: {data: PageServerData, form: ActionData} = $props();
 	
@@ -41,10 +49,26 @@
 		'#2F4F4F'  // Dark Slate Gray (already dark)
 	];
 
+	function handleDateSelect() {
+        const params = new URLSearchParams(window.location.search);
+        if (!dateRange.from || !dateRange.to) {
+            params.set('cardsDateRangeFrom', "")
+            params.set('cardsDateRangeTo', "")
+            goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
+            return;
+        };
+        params.set('cardsDateRangeFrom', new Date(dateRange.from.setDate(dateRange.from.getDate() + 1)).toISOString().slice(0, 10))
+        params.set('cardsDateRangeTo', new Date(dateRange.to.setDate(dateRange.to.getDate() + 1)).toISOString().slice(0, 10))
+
+        dateRange.from.setDate(dateRange.from.getDate() - 1)
+        dateRange.to.setDate(dateRange.to.getDate() - 1)
+        goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
+    }
+
 </script>
 
 <main class=" w-full flex flex-col items-center bg-neutral-900 h-full">
-	<div class=" flex flex-col gap-20 mt-20 mb-60 px-12 items-center z-0 w-full max-w-[1100px]">
+	<div class=" flex flex-col gap-5 mt-20 mb-60 px-12 z-0 w-full max-w-[1100px]">
 		<div use:clickOutside={() => uploadModal = false} class=" w-full flex justify-between items-center">
 			<p class=" text-4xl font-bold ">Dashboard</p>
 			<button onclick={() => uploadModal = true} class=" bg-blue-700 cursor-pointer py-3 px-2 rounded-md text-sm font-semibold active:scale-95 flex gap-2 items-center hover:bg-blue-800">
@@ -96,9 +120,7 @@
 			{/if}
 		</div>
 		{#await data.statistics}
-			<!-- TODO: Add money spent and money earned skeleton cards -->
-			<p>Awaiting data...</p>
-		{:then statistics}
+			<CalendarButton/>
 			<div class=" flex justify-evenly w-full gap-20">
 				<!-- ---------------- -->
 				<!-- Money spent card -->
@@ -106,11 +128,68 @@
 				<div class=" w-full rounded-2xl h-[600px] flex flex-col p-10 border border-neutral-800 shadow-lg shadow-neutral-800">
 					<div class=" mb-9">
 						<p class=" text-4xl font-bold ">Money spent</p>
-						<!-- TODO: add functionality for choosing what dates to show data from -->
-						<button class=" flex items-center text-neutral-400 italic cursor-pointer mt-1">
-							Feb 2025 - Mar 2025
-							<ArrowDown color="darkNeutral"/>
-						</button>
+					</div>
+					<div class="h-[310px] p-4 overflow-auto relative w-full mb-9 flex justify-center items-center">
+						<p class=" text-neutral-400 italic">Loading...</p>
+					</div>
+					<div class=" h-[200px] flex flex-col">
+						<div class=" flex items-center gap-2 ">
+							<Leaderboard  size="medium"/>
+							<p class="text-2xl font-bold">Top 3 categories</p> 
+						</div>
+						<div class=" flex mt-6 w-full justify-between">
+							<ol class=" text-neutral-400 italic">
+								<li>1. Loading...</li>
+								<li>2. Loading...</li>
+								<li>3. Loading...</li>
+							</ol>
+							<ol class=" text-end font-bold italic text-neutral-400">
+								<li>Loading...</li>
+								<li>Loading...</li>
+								<li>Loading...</li>
+							</ol>
+						</div>
+					</div>
+				</div>
+				<!-- ----------------- -->
+				<!-- Money earned card -->
+				<!-- ----------------- -->
+				<div class=" w-full rounded-2xl h-[600px] flex flex-col p-10 border border-neutral-800 shadow-lg shadow-neutral-800">
+					<div class=" mb-9">
+						<p class=" text-4xl font-bold ">Money earned</p>
+					</div>
+					<div class="h-[310px] p-4 relative w-full mb-9 overflow-hidden flex justify-center items-center">
+						<p class=" text-neutral-400 italic">Loading...</p>
+					</div>
+					<div class=" h-[200px] flex flex-col">
+						<div class=" flex items-center gap-2 ">
+							<Leaderboard  size="medium"/>
+							<p class="text-2xl font-bold">Top 3 categories</p> 
+						</div>
+						<div class=" flex mt-6 w-full justify-between">
+							<ol class=" text-neutral-400 italic">
+								<li>1. Loading...</li>
+								<li>2. Loading...</li>
+								<li>3. Loading...</li>
+							</ol>
+							<ol class=" text-end font-bold italic text-neutral-400">
+								<li>Loading...</li>
+								<li>Loading...</li>
+								<li>Loading...</li>
+							</ol>
+						</div>
+					</div>
+				</div>
+			</div>
+		{:then statistics}
+			<CalendarButton range={true} dateFormat={{ dateStyle: "medium"}} bind:rangeFrom={dateRange.from} bind:rangeTo={dateRange.to} onclear={handleDateSelect} onselect={handleDateSelect}/>
+			<div class=" flex justify-evenly w-full gap-20">
+				<!-- ---------------- -->
+				<!-- Money spent card -->
+				<!-- ---------------- -->
+				<div class=" w-full rounded-2xl h-[600px] flex flex-col p-10 border border-neutral-800 shadow-lg shadow-neutral-800">
+					<div class=" mb-9">
+						<p class=" text-4xl font-bold ">Money spent</p>
 					</div>
 					{#if statistics?.kategoriData.length !== 0}
 						<div class="h-[310px] p-4 overflow-auto relative w-full mb-9">
@@ -157,11 +236,6 @@
 				<div class=" w-full rounded-2xl h-[600px] flex flex-col p-10 border border-neutral-800 shadow-lg shadow-neutral-800">
 					<div class=" mb-9">
 						<p class=" text-4xl font-bold ">Money earned</p>
-						<button class=" flex items-center text-neutral-400 italic cursor-pointer mt-1">
-							<!-- TODO: add functionality for choosing what dates to show data from -->
-							Feb 2025 - Mar 2025
-							<ArrowDown color="darkNeutral"/>
-						</button>
 					</div>
 					{#if statistics?.kategoriData.length !== 0 && statistics?.moneyIn !== undefined && statistics?.moneyOut !== undefined}
 						<div class="h-[310px] p-4 relative w-full mb-9 overflow-hidden">

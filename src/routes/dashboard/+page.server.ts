@@ -60,14 +60,18 @@ export const load: PageServerLoad = async (event) => {
 
     if (!event.locals.user) return;
 
+    const newDate = new Date();
+
     const url = event.url;
     const sortBy = (url.searchParams.get('sortBy') as SortKey) ?? 'dato';
     const sortDir = (url.searchParams.get('sortDir') as SortDir) ?? 'desc';
     const search = url.searchParams.get('search') ?? null;
     const paginationNumber = url.searchParams.get('page') ? Number(url.searchParams.get('page')) : 0;
     const perPageNumber = url.searchParams.get('perPage') ? Number(url.searchParams.get('perPage')) : 20;
-    const dateRangeFrom = url.searchParams.get('dateRangeFrom') ? new Date(url.searchParams.get('dateRangeFrom')!) : null
-    const dateRangeTo = url.searchParams.get('dateRangeTo') ? new Date(url.searchParams.get('dateRangeTo')!) : null
+    const tableDateRangeFrom = url.searchParams.get('tableDateRangeFrom') ? new Date(url.searchParams.get('tableDateRangeFrom')!) : null
+    const tableDateRangeTo = url.searchParams.get('tableDateRangeTo') ? new Date(url.searchParams.get('tableDateRangeTo')!) : null
+    const cardsDateRangeFrom = url.searchParams.get('cardsDateRangeFrom') ? new Date(url.searchParams.get('cardsDateRangeFrom')!) : new Date(newDate.setMonth(newDate.getMonth() - 1))
+    const cardsDateRangeTo = url.searchParams.get('cardsDateRangeTo') ? new Date(url.searchParams.get('cardsDateRangeTo')!) : new Date()
 
     const col = columnMap[sortBy]!;
     let sortOrder;
@@ -104,12 +108,12 @@ export const load: PageServerLoad = async (event) => {
                     ) 
             : eq(table.accountStatements.userId, event.locals.user.id),
 
-            dateRangeTo && dateRangeFrom ?
-            lte(table.accountStatements.dato, dateRangeTo)
+            tableDateRangeTo && tableDateRangeFrom ?
+            lte(table.accountStatements.dato, tableDateRangeTo)
             : eq(table.accountStatements.userId, event.locals.user.id),
 
-            dateRangeTo && dateRangeFrom ?
-            gte(table.accountStatements.dato, dateRangeFrom)
+            tableDateRangeTo && tableDateRangeFrom ?
+            gte(table.accountStatements.dato, tableDateRangeFrom)
             : eq(table.accountStatements.userId, event.locals.user.id),
 
         )
@@ -133,13 +137,13 @@ export const load: PageServerLoad = async (event) => {
                         sql`LOWER(${table.accountStatements.underkategori}) LIKE LOWER(${`%${search}%`})`
                     ) 
             : eq(table.accountStatements.userId, event.locals.user.id),
-            
-            dateRangeTo && dateRangeFrom ?
-            lte(table.accountStatements.dato, dateRangeTo)
+
+            tableDateRangeTo && tableDateRangeFrom ?
+            lte(table.accountStatements.dato, tableDateRangeTo)
             : eq(table.accountStatements.userId, event.locals.user.id),
 
-            dateRangeTo && dateRangeFrom ?
-            gte(table.accountStatements.dato, dateRangeFrom)
+            tableDateRangeTo && tableDateRangeFrom ?
+            gte(table.accountStatements.dato, tableDateRangeFrom)
             : eq(table.accountStatements.userId, event.locals.user.id),
 
         )
@@ -160,7 +164,19 @@ export const load: PageServerLoad = async (event) => {
         underkategori: table.accountStatements.underkategori
     })
     .from(table.accountStatements)
-    .where(eq(table.accountStatements.userId, event.locals.user.id));
+    .where(
+        and(
+            eq(table.accountStatements.userId, event.locals.user.id),
+
+            cardsDateRangeTo && cardsDateRangeFrom ?
+            lte(table.accountStatements.dato, cardsDateRangeTo)
+            : eq(table.accountStatements.userId, event.locals.user.id),
+
+            cardsDateRangeTo && cardsDateRangeFrom ?
+            gte(table.accountStatements.dato, cardsDateRangeFrom)
+            : eq(table.accountStatements.userId, event.locals.user.id),
+        )
+    );
 
     async function createStatistics() {
         let moneyIn = 0;
@@ -241,9 +257,9 @@ export const load: PageServerLoad = async (event) => {
 
     return {
         user: event.locals.user,
-        accountStatements: await accountStatements,
-        statistics: await createStatistics(),
-        accountStatementsCount: await accountStatementsCount
+        statistics: createStatistics(),
+        accountStatementsCount: await accountStatementsCount,
+        accountStatements: accountStatements
     };
 };
 
