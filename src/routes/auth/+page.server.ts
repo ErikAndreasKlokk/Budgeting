@@ -56,12 +56,22 @@ export const actions: Actions = {
         const formData = await event.request.formData();
         const username = formData.get('username');
         const password = formData.get('password');
+        const confirmPassword = formData.get('confirmPassword');
 
         if (!validateUsername(username)) {
-            return fail(400, { message: 'Invalid username' });
+            return fail(400, { message: 'Invalid username (3-31 characters, letters, numbers, _ and - only)' });
         }
         if (!validatePassword(password)) {
-            return fail(400, { message: 'Invalid password' });
+            return fail(400, { message: 'Password must be 4-255 characters' });
+        }
+        if (password !== confirmPassword) {
+            return fail(400, { message: 'Passwords do not match' });
+        }
+
+        // Check if username already exists
+        const existingUser = await db.select().from(table.user).where(eq(table.user.username, username));
+        if (existingUser.length > 0) {
+            return fail(400, { message: 'Username already taken' });
         }
 
         const userId = generateUserId();
