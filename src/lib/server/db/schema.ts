@@ -1,17 +1,17 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { pgTable, text, serial, timestamp } from 'drizzle-orm/pg-core';
 
-export const user = sqliteTable('user', {
+export const user = pgTable('user', {
 	id: text('id').primaryKey(),
 	username: text('username').notNull(),
 	passwordHash: text('password_hash').notNull(),
 });
 
-export const accountStatements = sqliteTable('accountStatements', {
-	id: integer("id").primaryKey({ autoIncrement: true }),
+export const accountStatements = pgTable('accountStatements', {
+	id: serial("id").primaryKey(),
 	userId: text('user_id')
 		.notNull()
 		.references(() => user.id),
-	dato: integer({ mode: 'timestamp' }).notNull(),
+	dato: timestamp('dato').notNull(),
 	innPaaKonto: text(),
 	utFraKonto: text(),
 	tilKonto: text(),
@@ -25,12 +25,12 @@ export const accountStatements = sqliteTable('accountStatements', {
 	underkategori: text()
 })
 
-export const session = sqliteTable('session', {
+export const session = pgTable('session', {
 	id: text('id').primaryKey(),
 	userId: text('user_id')
 		.notNull()
 		.references(() => user.id),
-	expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull()
+	expiresAt: timestamp('expires_at').notNull()
 });
 
 export type Session = typeof session.$inferSelect;

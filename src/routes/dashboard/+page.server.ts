@@ -344,8 +344,8 @@ export const actions: Actions = {
                     underkategori: formUnderkategori ? formUnderkategori : statement.underkategori
                 }).where(sql`
                     ${table.accountStatements.userId} = ${event.locals.user?.id}
-                    and ${table.accountStatements.id} = ${Number(statement.statementId)} 
-                `).limit(1)
+                    and ${table.accountStatements.id} = ${Number(statement.statementId)}
+                `)
             })
             return { formTekst: formTekst, formHovedkategori: formHovedkategori, formUnderkategori: formUnderkategori, formId: JSON.stringify(formIdJson) }
         } else {
@@ -355,8 +355,8 @@ export const actions: Actions = {
                 underkategori: formUnderkategori
             }).where(sql`
                 ${table.accountStatements.userId} = ${event.locals.user.id}
-                and ${table.accountStatements.id} = ${Number(formIdJson)} 
-            `).limit(1)
+                and ${table.accountStatements.id} = ${Number(formIdJson)}
+            `)
 
             return { formTekst: formTekst, formHovedkategori: formHovedkategori, formUnderkategori: formUnderkategori, formId: formId }
         }

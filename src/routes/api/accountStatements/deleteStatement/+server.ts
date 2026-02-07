@@ -12,7 +12,7 @@ export const DELETE: RequestHandler = async ({ request, locals }) => {
     await db.delete(table.accountStatements).where(sql`
         ${table.accountStatements.userId} = ${locals.user.id}
         and ${table.accountStatements.id} = ${statement}
-    `).limit(1)
+    `)
 
     return new Response(null, { status: 204 })
 }

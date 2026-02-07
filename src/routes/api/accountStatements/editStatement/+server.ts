@@ -9,14 +9,14 @@ export const PATCH: RequestHandler = async ({ request, locals }) => {
 
     if(!locals.user || !locals.session) return new Response("Unauthorized request", { status: 401 });
     
-    await db.update(table.accountStatements).set({ 
-        tekst: statement.tekst, 
-        hovedkategori: statement.hovedkategori, 
-        underkategori: statement.underkategori 
+    await db.update(table.accountStatements).set({
+        tekst: statement.tekst,
+        hovedkategori: statement.hovedkategori,
+        underkategori: statement.underkategori
     }).where(sql`
         ${table.accountStatements.userId} = ${locals.user.id}
-        and ${table.accountStatements.id} = ${statement.id} 
-    `).limit(1)
+        and ${table.accountStatements.id} = ${statement.id}
+    `)
 
     return new Response(null, { status: 204 })
 }
