@@ -21,6 +21,14 @@ interface csvBulderFormat {
     Underkategori: string | null
 }
 
+interface csvDnbFormat {
+    Dato: string,
+    Forklaring: string | null,
+    Rentedato: string | null,
+    'Ut fra konto': string | null,
+    'Inn på konto': string | null
+}
+
 export interface accountStatementFormat {
     statementId: number,
     dato: Date,
@@ -92,7 +100,12 @@ export const load: PageServerLoad = async (event) => {
     let sortOrder;
 
     if (sortBy === 'innPaaKonto' || sortBy === 'utFraKonto') {
-        const expr = sql`CAST(${col} AS numeric)`;
+        // Replace comma with period for European number format, handle empty strings
+        // Use COALESCE to put NULL values last for both ASC and DESC
+        const numericExpr = sql`CAST(NULLIF(REPLACE(${col}, ',', '.'), '') AS numeric)`;
+        const expr = sortDir === 'desc'
+            ? sql`COALESCE(${numericExpr}, -999999999999)`  // Small value so NULLs sort last in DESC
+            : sql`COALESCE(${numericExpr}, 999999999999)`;   // Large value so NULLs sort last in ASC
         sortOrder = sortDir === 'asc' ? asc(expr) : desc(expr);
     } else {
         sortOrder = sortDir === 'asc' ? asc(col) : desc(col);
@@ -114,13 +127,13 @@ export const load: PageServerLoad = async (event) => {
             eq(table.accountStatements.userId, event.locals.user.id),
 
             search ? or(
-                        sql`LOWER(${table.accountStatements.dato}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(CAST(${table.accountStatements.dato} AS TEXT)) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.innPaaKonto}) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.utFraKonto}) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.tekst}) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.hovedkategori}) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.underkategori}) LIKE LOWER(${`%${search}%`})`
-                    ) 
+                    )
             : eq(table.accountStatements.userId, event.locals.user.id),
 
             tableDateRangeTo && tableDateRangeFrom ?
@@ -144,13 +157,13 @@ export const load: PageServerLoad = async (event) => {
             eq(table.accountStatements.userId, event.locals.user.id),
 
             search ? or(
-                        sql`LOWER(${table.accountStatements.dato}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(CAST(${table.accountStatements.dato} AS TEXT)) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.innPaaKonto}) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.utFraKonto}) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.tekst}) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.hovedkategori}) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.underkategori}) LIKE LOWER(${`%${search}%`})`
-                    ) 
+                    )
             : eq(table.accountStatements.userId, event.locals.user.id),
 
             tableDateRangeTo && tableDateRangeFrom ?
@@ -325,7 +338,6 @@ export const actions: Actions = {
         // Parse CSV based on bank selection
         if (bank === 'bulder') {
             const parsedCSV = await parseCSV(stream)
-
         try {
             parsedCSV.map(async (line) => {
                 if (!event.locals.user?.id) return;
@@ -372,8 +384,61 @@ export const actions: Actions = {
         } catch (e) {
             return fail(500, { message: 'An error has occurred' });
         }
-        } // End of bank === 'bulder' block
-        // Add more bank parsers here as needed:
+        } else if (bank === 'dnb') {
+            // DNB CSV format:
+            // "Dato";"Forklaring";"Rentedato";"Ut fra konto";"Inn på konto"
+            // Date format: DD.MM.YYYY
+            const parsedCSV = await parseCSVDnb(stream);
+            try {
+                parsedCSV.map(async (line) => {
+                    if (!event.locals.user?.id) return;
+
+                    if (!line.Dato) return fail(400, { message: "Atleast one line in the file is missing a date" });
+
+                    // Parse DD.MM.YYYY date format
+                    const dateParts = line.Dato.split('.');
+                    const parsedDate = new Date(
+                        parseInt(dateParts[2]), // year
+                        parseInt(dateParts[1]) - 1, // month (0-indexed)
+                        parseInt(dateParts[0]) // day
+                    );
+
+                    // Check for duplicate entries
+                    const accountStatement = await db.select({
+                        dato: table.accountStatements.dato
+                    }).from(table.accountStatements).where(sql`
+                        ${table.accountStatements.userId}         = ${event.locals.user.id}
+                        and ${table.accountStatements.dato}       = ${parsedDate.toISOString()}
+                        and ${table.accountStatements.innPaaKonto} = ${line['Inn på konto']}
+                        and ${table.accountStatements.utFraKonto}  = ${line['Ut fra konto']}
+                        and ${table.accountStatements.tekst}       = ${line.Forklaring?.trim() || null}
+                    `).limit(1);
+
+                    if (accountStatement.length !== 0) return;
+
+                    await db.insert(table.accountStatements).values({
+                        userId: event.locals.user.id,
+                        dato: parsedDate,
+                        innPaaKonto: line['Inn på konto'] || null,
+                        utFraKonto: line['Ut fra konto'] || null,
+                        tilKonto: null,
+                        tilKontonummer: null,
+                        fraKonto: null,
+                        fraKontonummer: null,
+                        type: null,
+                        tekst: line.Forklaring?.trim() || null,
+                        kid: null,
+                        hovedkategori: "No category",
+                        underkategori: "No category"
+                    });
+                });
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            } catch (e) {
+                return fail(500, { message: 'An error has occurred' });
+            }
+        }
+
+        // Add more bank parsers here as needed
         // else if (bank === 'other_bank') { ... }
     },
     editStatement: async (event) => {
@@ -416,5 +481,11 @@ export const actions: Actions = {
 const parseCSV = (stream: Readable): Promise<Array<csvBulderFormat>> => {
     return new Promise((resolve) => {
         Papa.parse(stream, { header: true, encoding: "utf-8", delimiter: ";", complete: (results) => { resolve(results.data as Array<csvBulderFormat>) } });
+    });
+};
+
+const parseCSVDnb = (stream: Readable): Promise<Array<csvDnbFormat>> => {
+    return new Promise((resolve) => {
+        Papa.parse(stream, { header: true, encoding: "utf-8", delimiter: ";", complete: (results) => { resolve(results.data as Array<csvDnbFormat>) } });
     });
 };

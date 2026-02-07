@@ -120,7 +120,7 @@
 										onclick={() => bankDropdownOpen = !bankDropdownOpen}
 										class="w-full text-sm rounded-lg p-3 bg-neutral-700 border border-neutral-600 text-white cursor-pointer transition-colors flex items-center justify-between {bankDropdownOpen ? 'ring-2 ring-blue-500 border-blue-500' : ''}"
 									>
-										<span>{selectedBank === 'bulder' ? 'Bulder Bank' : 'Other Bank'}</span>
+										<span>{selectedBank === 'bulder' ? 'Bulder Bank' : selectedBank === 'dnb' ? 'DNB' : 'Other Bank'}</span>
 										<svg class="w-4 h-4 text-neutral-400 transition-transform {bankDropdownOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
 										</svg>
@@ -133,6 +133,13 @@
 												class="w-full px-3 py-2.5 text-sm text-left text-white hover:bg-neutral-600 transition-colors cursor-pointer {selectedBank === 'bulder' ? 'bg-neutral-600' : ''}"
 											>
 												Bulder Bank
+											</button>
+											<button
+												type="button"
+												onclick={(e) => {e.stopPropagation(); selectedBank = 'dnb'; bankDropdownOpen = false}}
+												class="w-full px-3 py-2.5 text-sm text-left text-white hover:bg-neutral-600 transition-colors cursor-pointer {selectedBank === 'dnb' ? 'bg-neutral-600' : ''}"
+											>
+												DNB
 											</button>
 											<button
 												type="button"

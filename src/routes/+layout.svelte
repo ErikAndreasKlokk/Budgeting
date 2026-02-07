@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Header from '$lib/components/header.svelte';
+	import Sidebar from '$lib/components/sidebar.svelte';
 	import type { LayoutProps } from './$types';
 	import '../app.css';
 	let { children, data }: LayoutProps = $props();
@@ -7,7 +7,7 @@
 
 <div class=" bg-neutral-800 text-neutral-200 flex justify-center min-h-screen">
 	<div class="w-full flex">
-		<Header user={data.user}/>
+		<Sidebar user={data.user}/>
 		{@render children()}
 		
 	</div>
