@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { type accountStatementFormat, type SortKey } from "../../routes/dashboard/proxy+page.server";
+	import { type accountStatementFormat, type SortKey } from "../../routes/dashboard/+page.server";
     import { enhance, applyAction  } from '$app/forms';
 	import Edit from "./icons/edit.svelte";
 	import Delete from "./icons/delete.svelte";

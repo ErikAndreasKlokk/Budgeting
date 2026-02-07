@@ -83,6 +83,11 @@ export const load: PageServerLoad = async (event) => {
     const cardsDateRangeFrom = url.searchParams.get('cardsDateRangeFrom') ? new Date(url.searchParams.get('cardsDateRangeFrom')!) : defaultFromDate
     const cardsDateRangeTo = url.searchParams.get('cardsDateRangeTo') ? new Date(url.searchParams.get('cardsDateRangeTo')!) : defaultToDate
 
+    // Calculate previous period for month-over-month comparison
+    const periodDuration = cardsDateRangeTo.getTime() - cardsDateRangeFrom.getTime();
+    const previousPeriodTo = new Date(cardsDateRangeFrom.getTime() - 1); // Day before current period starts
+    const previousPeriodFrom = new Date(previousPeriodTo.getTime() - periodDuration);
+
     const col = columnMap[sortBy]!;
     let sortOrder;
 
@@ -188,9 +193,31 @@ export const load: PageServerLoad = async (event) => {
         )
     );
 
+    // Query for previous period statistics (for month-over-month comparison)
+    const previousPeriodStatistics = db.select({
+        innPaaKonto: table.accountStatements.innPaaKonto,
+        utFraKonto: table.accountStatements.utFraKonto,
+    })
+    .from(table.accountStatements)
+    .where(
+        and(
+            eq(table.accountStatements.userId, event.locals.user.id),
+            lte(table.accountStatements.dato, previousPeriodTo),
+            gte(table.accountStatements.dato, previousPeriodFrom),
+        )
+    );
+
     async function createStatistics() {
         let moneyIn = 0;
         let moneyOut = 0;
+        let previousMoneyIn = 0;
+        let previousMoneyOut = 0;
+
+        // Calculate previous period totals
+        (await previousPeriodStatistics).forEach((statement) => {
+            previousMoneyIn += Number(statement.innPaaKonto?.replace(",", ".")) || 0;
+            previousMoneyOut += Number(statement.utFraKonto?.replace(",", ".").replace("-", "")) || 0;
+        });
 
         (await accountStatementsStatistics).map((statement) => {
             moneyIn += Number(statement.innPaaKonto?.replace(",", "."))
@@ -259,6 +286,8 @@ export const load: PageServerLoad = async (event) => {
         return {
             moneyIn: moneyIn,
             moneyOut: moneyOut,
+            previousMoneyIn: previousMoneyIn,
+            previousMoneyOut: previousMoneyOut,
             hovedkategorier: hovedkategorier,
             underkategorier: underkategorier,
             kategoriData: kategoriData
@@ -281,6 +310,7 @@ export const actions: Actions = {
     uploadCsv: async (event) => {
         const formData = await event.request.formData();
         const csv = formData.get('csv');
+        const bank = formData.get('bank') as string || 'bulder';
 
         if (typeof csv !== "object" || !csv) {
             return fail(400, { csv, missing: true })
@@ -291,7 +321,10 @@ export const actions: Actions = {
 
         const file = await csv.arrayBuffer();
         const stream = Readable.from(Buffer.from(file));
-        const parsedCSV = await parseCSV(stream)
+
+        // Parse CSV based on bank selection
+        if (bank === 'bulder') {
+            const parsedCSV = await parseCSV(stream)
 
         try {
             parsedCSV.map(async (line) => {
@@ -339,6 +372,9 @@ export const actions: Actions = {
         } catch (e) {
             return fail(500, { message: 'An error has occurred' });
         }
+        } // End of bank === 'bulder' block
+        // Add more bank parsers here as needed:
+        // else if (bank === 'other_bank') { ... }
     },
     editStatement: async (event) => {
         const formData = await event.request.formData();
