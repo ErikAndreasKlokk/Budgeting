@@ -14,15 +14,13 @@
 
 	let uploadModal = $state(false)
 	let file: FileList | null | undefined = $state(null)
-	const todaysDate = new Date();
 
+	let { data, form }: {data: PageServerData, form: ActionData} = $props();
 
 	let dateRange: { from: Date | undefined; to: Date | undefined } = $state({
-        from: new Date(todaysDate.getFullYear(), todaysDate.getMonth() - 1, todaysDate.getDate()),
-        to: todaysDate
+        from: data.defaultDateRange?.from ? new Date(data.defaultDateRange.from) : undefined,
+        to: data.defaultDateRange?.to ? new Date(data.defaultDateRange.to) : undefined
     });
-	
-	let { data, form }: {data: PageServerData, form: ActionData} = $props();
 	
 	const keyColors = [
 		'#1C86EE', // Darker Dodger Blue

@@ -60,8 +60,6 @@ export const load: PageServerLoad = async (event) => {
 
     if (!event.locals.user) return;
 
-    const newDate = new Date();
-
     const url = event.url;
     const sortBy = (url.searchParams.get('sortBy') as SortKey) ?? 'dato';
     const sortDir = (url.searchParams.get('sortDir') as SortDir) ?? 'desc';
@@ -70,8 +68,20 @@ export const load: PageServerLoad = async (event) => {
     const perPageNumber = url.searchParams.get('perPage') ? Number(url.searchParams.get('perPage')) : 20;
     const tableDateRangeFrom = url.searchParams.get('tableDateRangeFrom') ? new Date(url.searchParams.get('tableDateRangeFrom')!) : null
     const tableDateRangeTo = url.searchParams.get('tableDateRangeTo') ? new Date(url.searchParams.get('tableDateRangeTo')!) : null
-    const cardsDateRangeFrom = url.searchParams.get('cardsDateRangeFrom') ? new Date(url.searchParams.get('cardsDateRangeFrom')!) : new Date(newDate.setMonth(newDate.getMonth() - 1))
-    const cardsDateRangeTo = url.searchParams.get('cardsDateRangeTo') ? new Date(url.searchParams.get('cardsDateRangeTo')!) : new Date()
+
+    // Get the most recent date with data to use as default
+    const latestDateResult = await db.select({
+        latestDate: sql<Date>`MAX(${table.accountStatements.dato})`
+    })
+    .from(table.accountStatements)
+    .where(eq(table.accountStatements.userId, event.locals.user.id));
+
+    const latestDate = latestDateResult[0]?.latestDate ? new Date(latestDateResult[0].latestDate) : new Date();
+    const defaultFromDate = new Date(latestDate.getFullYear(), latestDate.getMonth(), 1); // First day of the month with latest data
+    const defaultToDate = new Date(latestDate.getFullYear(), latestDate.getMonth() + 1, 0); // Last day of the month with latest data
+
+    const cardsDateRangeFrom = url.searchParams.get('cardsDateRangeFrom') ? new Date(url.searchParams.get('cardsDateRangeFrom')!) : defaultFromDate
+    const cardsDateRangeTo = url.searchParams.get('cardsDateRangeTo') ? new Date(url.searchParams.get('cardsDateRangeTo')!) : defaultToDate
 
     const col = columnMap[sortBy]!;
     let sortOrder;
@@ -259,7 +269,11 @@ export const load: PageServerLoad = async (event) => {
         user: event.locals.user,
         statistics: createStatistics(),
         accountStatementsCount: await accountStatementsCount,
-        accountStatements: accountStatements
+        accountStatements: accountStatements,
+        defaultDateRange: {
+            from: defaultFromDate,
+            to: defaultToDate
+        }
     };
 };
 

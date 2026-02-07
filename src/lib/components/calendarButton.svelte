@@ -13,7 +13,7 @@
   let isOpen: boolean = $state(inline);
   let buttonElement: HTMLButtonElement | null = $state(null);
   let datepickerContainerElement: HTMLDivElement;
-  let currentMonth: Date = $state(value || defaultDate || new Date());
+  let currentMonth: Date = $state(rangeFrom || value || defaultDate || new Date());
   let focusedDate: Date | null = null;
   let calendarRef: HTMLDivElement | null = $state(null);
 
@@ -78,9 +78,9 @@
       rangeTo = undefined;
     } else {
       rangeTo = day;
-      isOpen = false
+      isOpen = false;
+      onselect?.({ from: rangeFrom, to: rangeTo });
     }
-    onselect?.({ from: rangeFrom, to: rangeTo });
   }
 
   function handleInputChange() {
