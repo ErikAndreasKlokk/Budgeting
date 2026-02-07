@@ -245,10 +245,10 @@
 					{#if statistics?.kategoriData?.length !== 0}
 						{@const sortedOut = statistics?.kategoriData?.sort((a, b) => b?.moneyOut - a?.moneyOut) ?? []}
 						{@const maxOut = sortedOut[0]?.moneyOut || 1}
-						{@const spendingChange = statistics?.previousMoneyOut > 0 ? ((statistics?.moneyOut - statistics?.previousMoneyOut) / statistics?.previousMoneyOut) * 100 : 0}
+						{@const spendingChange = (statistics?.previousMoneyOut ?? 0) > 0 ? (((statistics?.moneyOut ?? 0) - (statistics?.previousMoneyOut ?? 0)) / (statistics?.previousMoneyOut ?? 1)) * 100 : 0}
 						<div class="flex items-baseline gap-3 mb-4">
 							<p class=" text-3xl font-bold">{statistics?.moneyOut.toFixed(0)} <span class="text-base text-neutral-400 font-medium">kr</span></p>
-							{#if statistics?.previousMoneyOut > 0}
+							{#if (statistics?.previousMoneyOut ?? 0) > 0}
 								<p class="text-sm flex items-center gap-1 {spendingChange <= 0 ? 'text-emerald-500' : 'text-red-500'}">
 									<span class="text-neutral-500 font-normal">vs prev:</span>
 									{#if spendingChange < 0}
