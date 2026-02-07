@@ -12,8 +12,9 @@
 	import Calendar from "./icons/calendar.svelte";
 	import More from "./icons/more.svelte";
 	import CalendarInput from "./calendarInput.svelte";
+	import { page } from "$app/state";
 
-    const { accountStatements, statistics, accountStatementsCount }: { accountStatements: accountStatementFormat[], statistics: any, accountStatementsCount: any} = $props()
+    const { accountStatements, statistics, accountStatementsCount, defaultDateRange }: { accountStatements: accountStatementFormat[], statistics: any, accountStatementsCount: any, defaultDateRange?: { from: Date, to: Date } } = $props()
 
     let editStatementModal = $state(false)
 	let confirmDeleteStatementModal = $state(false)
@@ -47,11 +48,22 @@
         searchValue = params.get("search") ?? ""
         paginationNumber = params.get("page") ? Number(params.get("page")) : 0
         perPageNumber = params.get("perPage") ? Number(params.get("perPage")) : perPageNumber
-        const dateRangeFrom = params.get("dateRangeFrom");
-        dateRange.from = dateRangeFrom ? new Date(dateRangeFrom) : undefined;
-        const dateRangeTo = params.get("dateRangeTo");
-        dateRange.to = dateRangeTo ? new Date(dateRangeTo) : undefined;
     })
+
+    // Sync dateRange with URL params after navigation
+    $effect(() => {
+        const url = page.url;
+        const fromParam = url.searchParams.get('tableDateRangeFrom');
+        const toParam = url.searchParams.get('tableDateRangeTo');
+
+        if (fromParam && toParam) {
+            dateRange.from = new Date(fromParam);
+            dateRange.to = new Date(toParam);
+        } else if (!fromParam && !toParam) {
+            dateRange.from = undefined;
+            dateRange.to = undefined;
+        }
+    });
 
     function updateSort(col: SortKey) {
         const params = new URLSearchParams(window.location.search);
@@ -239,7 +251,7 @@
                         <Calendar />
                         Select date 
                     </label>
-                    <CalendarInput bind:rangeFrom={dateRange.from} bind:rangeTo={dateRange.to} onclear={handleDateSelect} onselect={handleDateSelect} />
+                    <CalendarInput bind:rangeFrom={dateRange.from} bind:rangeTo={dateRange.to} onclear={handleDateSelect} onselect={handleDateSelect} defaultDate={defaultDateRange?.from ? new Date(defaultDateRange.from) : null} />
                 </div>
             </div>
         </div>

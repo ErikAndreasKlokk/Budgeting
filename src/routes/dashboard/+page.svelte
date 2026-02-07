@@ -11,6 +11,7 @@
 	import Leaderboard from '$lib/components/icons/leaderboard.svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 	import CalendarButton from '$lib/components/calendarButton.svelte';
+	import { page } from '$app/state';
 
 	let uploadModal = $state(false)
 	let file: FileList | null | undefined = $state(null)
@@ -21,6 +22,21 @@
         from: data.defaultDateRange?.from ? new Date(data.defaultDateRange.from) : undefined,
         to: data.defaultDateRange?.to ? new Date(data.defaultDateRange.to) : undefined
     });
+
+	// Sync dateRange with URL params after navigation
+	$effect(() => {
+		const url = page.url;
+		const fromParam = url.searchParams.get('cardsDateRangeFrom');
+		const toParam = url.searchParams.get('cardsDateRangeTo');
+
+		if (fromParam && toParam) {
+			dateRange.from = new Date(fromParam);
+			dateRange.to = new Date(toParam);
+		} else if (!fromParam && !toParam && data.defaultDateRange) {
+			dateRange.from = data.defaultDateRange.from ? new Date(data.defaultDateRange.from) : undefined;
+			dateRange.to = data.defaultDateRange.to ? new Date(data.defaultDateRange.to) : undefined;
+		}
+	});
 	
 	const keyColors = [
 		'#1C86EE', // Darker Dodger Blue
@@ -291,10 +307,10 @@
 				{#await data.accountStatementsCount}
 					<TableSkeleton />
 				{:then accountStatementsCount} 
-					<Table {accountStatements} statistics={data.statistics} {accountStatementsCount} />
+					<Table {accountStatements} statistics={data.statistics} {accountStatementsCount} defaultDateRange={data.defaultDateRange} />
 				{/await}
 			{:else}
-				<Table accountStatements={[]} statistics={{}} accountStatementsCount={data.accountStatementsCount} />
+				<Table accountStatements={[]} statistics={{}} accountStatementsCount={data.accountStatementsCount} defaultDateRange={data.defaultDateRange} />
 			{/if}
 		{/await}
 	</div>
