@@ -227,7 +227,7 @@
 						<div class=" h-[200px] flex flex-col">
 							<div class=" flex items-center gap-2 ">
 								<Leaderboard  size="medium"/>
-								<p class="text-2xl font-bold">Top 3 categories</p> 
+								<p class="text-2xl font-bold">Top 3 categories</p>
 							</div>
 							<div class=" flex mt-6 w-full justify-between">
 								<ol>
@@ -241,6 +241,25 @@
 									<li>{statistics?.kategoriData.sort((a, b) => b?.moneyOut - a?.moneyOut)[2]?.moneyOut.toFixed(0)} kr</li>
 								</ol>
 							</div>
+						</div>
+					{:else}
+						<div class="h-[310px] p-4 relative w-full mb-9 flex justify-center items-center">
+							<div class="w-[200px] h-[200px] rounded-full border-[20px] border-neutral-800"></div>
+							<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+								<p class="text-neutral-500 font-semibold">0 kr</p>
+							</div>
+						</div>
+						<div class="h-[200px] flex flex-col">
+							<div class="flex items-center gap-2">
+								<Leaderboard size="medium"/>
+								<p class="text-2xl font-bold">Top 3 categories</p>
+							</div>
+							<div class="flex flex-col mt-6 gap-3">
+								<div class="h-4 w-3/4 bg-neutral-800 rounded"></div>
+								<div class="h-4 w-2/3 bg-neutral-800 rounded"></div>
+								<div class="h-4 w-1/2 bg-neutral-800 rounded"></div>
+							</div>
+							<p class="text-neutral-500 text-sm mt-6 italic">No data for selected period</p>
 						</div>
 					{/if}
 				</div>
@@ -258,7 +277,7 @@
 									<Pie outerRadius={100} innerRadius={80} {tooltip}/>
 								</Svg>
 								<Tooltip.Root let:data>
-									
+
 									<Tooltip.List>
 										<Tooltip.Item
 										label={data.label}
@@ -277,7 +296,7 @@
 						<div class=" h-[200px] flex flex-col">
 							<div class=" flex items-center gap-2 ">
 								<Leaderboard  size="medium"/>
-								<p class="text-2xl font-bold">Top 3 categories</p> 
+								<p class="text-2xl font-bold">Top 3 categories</p>
 							</div>
 							<div class=" flex mt-6 w-full justify-between">
 								<ol>
@@ -291,6 +310,25 @@
 									<li>{statistics?.kategoriData?.sort((a, b) => b?.moneyIn - a?.moneyIn)[2]?.moneyIn.toFixed(0)} kr</li>
 								</ol>
 							</div>
+						</div>
+					{:else}
+						<div class="h-[310px] p-4 relative w-full mb-9 flex justify-center items-center">
+							<div class="w-[200px] h-[200px] rounded-full border-[20px] border-neutral-800"></div>
+							<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+								<p class="text-neutral-500 font-semibold">0 kr</p>
+							</div>
+						</div>
+						<div class="h-[200px] flex flex-col">
+							<div class="flex items-center gap-2">
+								<Leaderboard size="medium"/>
+								<p class="text-2xl font-bold">Top 3 categories</p>
+							</div>
+							<div class="flex flex-col mt-6 gap-3">
+								<div class="h-4 w-3/4 bg-neutral-800 rounded"></div>
+								<div class="h-4 w-2/3 bg-neutral-800 rounded"></div>
+								<div class="h-4 w-1/2 bg-neutral-800 rounded"></div>
+							</div>
+							<p class="text-neutral-500 text-sm mt-6 italic">No data for selected period</p>
 						</div>
 					{/if}
 				</div>
