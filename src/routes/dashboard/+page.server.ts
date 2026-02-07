@@ -269,7 +269,7 @@ export const load: PageServerLoad = async (event) => {
         user: event.locals.user,
         statistics: createStatistics(),
         accountStatementsCount: await accountStatementsCount,
-        accountStatements: accountStatements,
+        accountStatements: await accountStatements,
         defaultDateRange: {
             from: defaultFromDate,
             to: defaultToDate

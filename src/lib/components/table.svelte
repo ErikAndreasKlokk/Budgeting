@@ -4,7 +4,7 @@
 	import Edit from "./icons/edit.svelte";
 	import Delete from "./icons/delete.svelte";
 	import Search from "./icons/search.svelte";
-	import { goto, invalidateAll } from "$app/navigation";
+	import { goto, invalidateAll, afterNavigate } from "$app/navigation";
 	import { clickOutside } from "svelte-outside";
 	import ArrowDown from "./icons/arrowDown.svelte";
 	import ArrowUp from "./icons/arrowUp.svelte";
@@ -41,6 +41,15 @@
         to: undefined
     });
 
+    let savedScrollY: number | null = $state(null);
+
+    afterNavigate(() => {
+        if (savedScrollY !== null) {
+            window.scrollTo(0, savedScrollY);
+            savedScrollY = null;
+        }
+    });
+
     onMount(() => {
         const params = new URLSearchParams(window.location.search);
         currentSortParam = params.get("sortBy")
@@ -65,6 +74,18 @@
         }
     });
 
+    // Sync pagination and sort state with URL params after navigation
+    $effect(() => {
+        const url = page.url;
+        const pageParam = url.searchParams.get('page');
+        const sortByParam = url.searchParams.get('sortBy');
+        const sortDirParam = url.searchParams.get('sortDir');
+
+        paginationNumber = pageParam ? Number(pageParam) : 0;
+        currentSortParam = sortByParam ?? undefined;
+        currentDirParam = sortDirParam ?? undefined;
+    });
+
     function updateSort(col: SortKey) {
         const params = new URLSearchParams(window.location.search);
         const currentBy  = params.get('sortBy');
@@ -75,6 +96,8 @@
                 : 'desc';
         params.set('sortBy', col);
         params.set('sortDir', dir);
+        params.set('page', '0');
+        paginationNumber = 0;
         goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
         currentSortParam = col
         currentDirParam = dir
@@ -92,6 +115,7 @@
         paginationNumber = newPaginationNumber
         const params = new URLSearchParams(window.location.search);
         params.set('page', newPaginationNumber.toString());
+        savedScrollY = window.scrollY;
         goto(`?${params.toString()}`, { replaceState: true, noScroll: true });
     }
 
@@ -259,7 +283,7 @@
     <!-- --------------------------- -->
     <!-- Table of account statements -->
     <!-- --------------------------- -->
-    <div class=" rounded-xl bg-neutral-900 overflow-x-auto ">
+    <div class=" rounded-xl bg-neutral-900 overflow-x-auto " style="min-height: {Math.min(perPageNumber, 100) * 3.25}rem;">
         <table class="w-full text-sm text-left ">
             <thead class="text-xs uppercase bg-neutral-950  text-nowrap">
                 <tr>
