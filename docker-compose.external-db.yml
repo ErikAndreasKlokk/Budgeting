@@ -1,0 +1,21 @@
+# Docker Compose configuration for connecting to an external PostgreSQL database
+# Use this when you already have a PostgreSQL database running elsewhere
+
+services:
+  app:
+    build: .
+    container_name: budgeting-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Configure these to connect to your external PostgreSQL database
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      - NODE_ENV=production
+      - ORIGIN=${ORIGIN:-http://localhost:3000}
+    networks:
+      - budgeting-network
+
+networks:
+  budgeting-network:
+    driver: bridge

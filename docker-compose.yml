@@ -1,0 +1,41 @@
+services:
+  app:
+    build: .
+    container_name: budgeting-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-budgeting}
+      - NODE_ENV=production
+      - ORIGIN=${ORIGIN:-http://localhost:3000}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - budgeting-network
+
+  db:
+    image: postgres:16-alpine
+    container_name: budgeting-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-budgeting}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-budgeting}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - budgeting-network
+
+volumes:
+  postgres_data:
+
+networks:
+  budgeting-network:
+    driver: bridge
