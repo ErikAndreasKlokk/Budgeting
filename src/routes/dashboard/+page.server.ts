@@ -349,14 +349,14 @@ export const actions: Actions = {
                 }).from(table.accountStatements).where(sql`
                     ${table.accountStatements.userId}             = ${event.locals.user.id}
                     and ${table.accountStatements.dato}           = ${new Date(line.Dato).toISOString()} 
-                    and ${table.accountStatements.innPaaKonto}    = ${line['Inn på konto']}
-                    and ${table.accountStatements.utFraKonto}     = ${line['Ut fra konto']}
-                    and ${table.accountStatements.tilKonto}       = ${line['Til konto']}
-                    and ${table.accountStatements.tilKontonummer} = ${line['Til kontonummer']}
-                    and ${table.accountStatements.fraKonto}       = ${line['Fra konto']}
-                    and ${table.accountStatements.fraKontonummer} = ${line['Fra kontonummer']}
-                    and ${table.accountStatements.type}           = ${line.Type}
-                    and ${table.accountStatements.kid}            = ${line.KID}
+                    and ${table.accountStatements.innPaaKonto}    IS NOT DISTINCT FROM ${line['Inn på konto'] || null}
+                    and ${table.accountStatements.utFraKonto}     IS NOT DISTINCT FROM ${line['Ut fra konto'] || null}
+                    and ${table.accountStatements.tilKonto}       IS NOT DISTINCT FROM ${line['Til konto'] || null}
+                    and ${table.accountStatements.tilKontonummer} IS NOT DISTINCT FROM ${line['Til kontonummer'] || null}
+                    and ${table.accountStatements.fraKonto}       IS NOT DISTINCT FROM ${line['Fra konto'] || null}
+                    and ${table.accountStatements.fraKontonummer} IS NOT DISTINCT FROM ${line['Fra kontonummer'] || null}
+                    and ${table.accountStatements.type}           IS NOT DISTINCT FROM ${line.Type || null}
+                    and ${table.accountStatements.kid}            IS NOT DISTINCT FROM ${line.KID || null}
                 `).limit(1);
 
                 if (accountStatement.length !== 0) return; 
@@ -409,9 +409,9 @@ export const actions: Actions = {
                     }).from(table.accountStatements).where(sql`
                         ${table.accountStatements.userId}         = ${event.locals.user.id}
                         and ${table.accountStatements.dato}       = ${parsedDate.toISOString()}
-                        and ${table.accountStatements.innPaaKonto} = ${line['Inn på konto']}
-                        and ${table.accountStatements.utFraKonto}  = ${line['Ut fra konto']}
-                        and ${table.accountStatements.tekst}       = ${line.Forklaring?.trim() || null}
+                        and ${table.accountStatements.innPaaKonto} IS NOT DISTINCT FROM ${line['Inn på konto'] || null}
+                        and ${table.accountStatements.utFraKonto}  IS NOT DISTINCT FROM ${line['Ut fra konto'] || null}
+                        and ${table.accountStatements.tekst}       IS NOT DISTINCT FROM ${line.Forklaring?.trim() || null}
                     `).limit(1);
 
                     if (accountStatement.length !== 0) return;
