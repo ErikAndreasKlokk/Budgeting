@@ -1,0 +1,20 @@
+# Dockerfile for database migrations
+# Build and push this image alongside your main app image
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including drizzle-kit)
+RUN npm ci
+
+# Copy only the files needed for migrations
+COPY drizzle.config.ts ./
+COPY src/lib/server/db/schema.ts ./src/lib/server/db/
+COPY tsconfig.json ./
+
+# Default command runs schema push
+# Can be overridden in Kubernetes Job to construct DATABASE_URL from env vars
+CMD ["npm", "run", "db:push"]
