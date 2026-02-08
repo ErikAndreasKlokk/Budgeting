@@ -15,6 +15,6 @@ COPY drizzle.config.ts ./
 COPY src/lib/server/db/schema.ts ./src/lib/server/db/
 COPY tsconfig.json ./
 
-# Default command runs schema push
+# Default command runs schema push with --force to skip confirmation prompt
 # Can be overridden in Kubernetes Job to construct DATABASE_URL from env vars
-CMD ["npm", "run", "db:push"]
+CMD ["npx", "drizzle-kit", "push", "--force"]
