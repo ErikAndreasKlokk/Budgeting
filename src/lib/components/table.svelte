@@ -265,7 +265,7 @@
                         Search
                     </label>
                     <div class=" flex">
-                        <input bind:value={searchValue} type="text" id="search" name="search" class=" text-sm rounded-l-lg w-full p-2.5 bg-neutral-900 border border-neutral-700 placeholder-neutral-400 focus:ring-blue-500 focus:border-blue-500">
+                        <input bind:value={searchValue} onkeydown={(e) => e.key === 'Enter' && searchFunc(searchValue)} type="text" id="search" name="search" class=" text-sm rounded-l-lg w-full p-2.5 bg-neutral-900 border border-neutral-700 placeholder-neutral-400 focus:ring-blue-500 focus:border-blue-500">
                         <button onclick={() => searchFunc(searchValue)} class=" text-sm rounded-r-lg p-2.5 bg-neutral-800 border-r border-y border-neutral-700 cursor-pointer"><Search /></button>
                     </div>
                 </div>
@@ -300,20 +300,10 @@
                             {/if}
                         </div>
                     </th>
-                    <th class="px-3 py-5 cursor-pointer" onclick={() => updateSort("innPaaKonto")}>
+                    <th class="px-3 py-5 cursor-pointer" onclick={() => updateSort("belop")}>
                         <div class=" flex">
-                            Money in
-                            {#if currentSortParam === "innPaaKonto" && currentDirParam === "desc"}
-                                <ArrowUp />
-                            {:else}
-                                <ArrowDown />
-                            {/if}
-                        </div>
-                    </th>
-                    <th class="px-3 py-5 cursor-pointer" onclick={() => updateSort("utFraKonto")}>
-                        <div class=" flex">
-                            Money out
-                            {#if currentSortParam === "utFraKonto" && currentDirParam === "desc"}
+                            Amount
+                            {#if currentSortParam === "belop" && currentDirParam === "desc"}
                                 <ArrowUp />
                             {:else}
                                 <ArrowDown />
@@ -378,14 +368,11 @@
                             <td class="px-3 py-5 text-nowrap">
                                 {accountStatements[i].dato.toString().slice(4,16)}
                             </td>
-                            <td class="px-3 py-5">
-                                {accountStatements[i].innPaaKonto}
-                            </td>
-                            <td class="px-3 py-5">
-                                {accountStatements[i].utFraKonto}
+                            <td class="px-3 py-5" class:text-green-400={accountStatements[i].belop !== null && accountStatements[i].belop > 0} class:text-red-400={accountStatements[i].belop !== null && accountStatements[i].belop < 0}>
+                                {accountStatements[i].belop !== null ? accountStatements[i].belop.toLocaleString('nb-NO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
                             </td>
                             <td class="px-3 py-5 text-nowrap ">
-                                {accountStatements[i].tekst?.slice(0, 19) + "..."}
+                                {accountStatements[i].tekst && accountStatements[i].tekst.length > 19 ? accountStatements[i].tekst.slice(0, 19) + "..." : accountStatements[i].tekst ?? ''}
                             </td>
                             <td class="px-3 py-5">
                                 {accountStatements[i].hovedkategori}
@@ -409,7 +396,7 @@
                     {/each}
                 {:else}
                     <tr class="border-y border-x bg-neutral-900 border-neutral-800">
-                        <td colspan="9" class="px-6 py-16 text-center">
+                        <td colspan="8" class="px-6 py-16 text-center">
                             <div class="flex flex-col items-center justify-center gap-4">
                                 <div class="w-16 h-16 rounded-full border-4 border-neutral-800 flex items-center justify-center">
                                     <Calendar />

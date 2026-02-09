@@ -8,8 +8,9 @@ import { desc, eq, sql, asc, and, or, count, lte, gte } from 'drizzle-orm';
 
 interface csvBulderFormat {
     Dato: string,
-    'Inn på konto': string | null,
-    'Ut fra konto': string | null,
+    'Beløp': string | null,
+    'Originalt Beløp': string | null,
+    'Original Valuta': string | null,
     'Til konto': string | null,
     'Til kontonummer': string | null,
     'Fra konto': string | null,
@@ -32,8 +33,7 @@ interface csvDnbFormat {
 export interface accountStatementFormat {
     statementId: number,
     dato: Date,
-    innPaaKonto: string | null,
-    utFraKonto: string | null,
+    belop: number | null,
     type: string | null,
     tekst: string | null,
     hovedkategori: string | null,
@@ -54,8 +54,7 @@ interface categoryDataType {
 
 const columnMap = {
     dato: table.accountStatements.dato,
-    innPaaKonto: table.accountStatements.innPaaKonto,
-    utFraKonto: table.accountStatements.utFraKonto,
+    belop: table.accountStatements.belop,
     tekst: table.accountStatements.tekst,
     hovedkategori: table.accountStatements.hovedkategori,
     underkategori: table.accountStatements.underkategori
@@ -99,13 +98,11 @@ export const load: PageServerLoad = async (event) => {
     const col = columnMap[sortBy]!;
     let sortOrder;
 
-    if (sortBy === 'innPaaKonto' || sortBy === 'utFraKonto') {
-        // Replace comma with period for European number format, handle empty strings
+    if (sortBy === 'belop') {
         // Use COALESCE to put NULL values last for both ASC and DESC
-        const numericExpr = sql`CAST(NULLIF(REPLACE(${col}, ',', '.'), '') AS numeric)`;
         const expr = sortDir === 'desc'
-            ? sql`COALESCE(${numericExpr}, -999999999999)`  // Small value so NULLs sort last in DESC
-            : sql`COALESCE(${numericExpr}, 999999999999)`;   // Large value so NULLs sort last in ASC
+            ? sql`COALESCE(${col}, -999999999999)`  // Small value so NULLs sort last in DESC
+            : sql`COALESCE(${col}, 999999999999)`;   // Large value so NULLs sort last in ASC
         sortOrder = sortDir === 'asc' ? asc(expr) : desc(expr);
     } else {
         sortOrder = sortDir === 'asc' ? asc(col) : desc(col);
@@ -114,8 +111,7 @@ export const load: PageServerLoad = async (event) => {
     const accountStatements = db.select({
         statementId: table.accountStatements.id,
         dato: table.accountStatements.dato,
-        innPaaKonto: table.accountStatements.innPaaKonto,
-        utFraKonto: table.accountStatements.utFraKonto,
+        belop: table.accountStatements.belop,
         type: table.accountStatements.type,
         tekst: table.accountStatements.tekst,
         hovedkategori: table.accountStatements.hovedkategori,
@@ -128,8 +124,7 @@ export const load: PageServerLoad = async (event) => {
 
             search ? or(
                         sql`LOWER(CAST(${table.accountStatements.dato} AS TEXT)) LIKE LOWER(${`%${search}%`})`,
-                        sql`LOWER(${table.accountStatements.innPaaKonto}) LIKE LOWER(${`%${search}%`})`,
-                        sql`LOWER(${table.accountStatements.utFraKonto}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(CAST(${table.accountStatements.belop} AS TEXT)) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.tekst}) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.hovedkategori}) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.underkategori}) LIKE LOWER(${`%${search}%`})`
@@ -158,8 +153,7 @@ export const load: PageServerLoad = async (event) => {
 
             search ? or(
                         sql`LOWER(CAST(${table.accountStatements.dato} AS TEXT)) LIKE LOWER(${`%${search}%`})`,
-                        sql`LOWER(${table.accountStatements.innPaaKonto}) LIKE LOWER(${`%${search}%`})`,
-                        sql`LOWER(${table.accountStatements.utFraKonto}) LIKE LOWER(${`%${search}%`})`,
+                        sql`LOWER(CAST(${table.accountStatements.belop} AS TEXT)) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.tekst}) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.hovedkategori}) LIKE LOWER(${`%${search}%`})`,
                         sql`LOWER(${table.accountStatements.underkategori}) LIKE LOWER(${`%${search}%`})`
@@ -184,8 +178,7 @@ export const load: PageServerLoad = async (event) => {
     const accountStatementsStatistics = db.select({
         statementId: table.accountStatements.id,
         dato: table.accountStatements.dato,
-        innPaaKonto: table.accountStatements.innPaaKonto,
-        utFraKonto: table.accountStatements.utFraKonto,
+        belop: table.accountStatements.belop,
         type: table.accountStatements.type,
         tekst: table.accountStatements.tekst,
         hovedkategori: table.accountStatements.hovedkategori,
@@ -208,8 +201,7 @@ export const load: PageServerLoad = async (event) => {
 
     // Query for previous period statistics (for month-over-month comparison)
     const previousPeriodStatistics = db.select({
-        innPaaKonto: table.accountStatements.innPaaKonto,
-        utFraKonto: table.accountStatements.utFraKonto,
+        belop: table.accountStatements.belop,
     })
     .from(table.accountStatements)
     .where(
@@ -228,18 +220,31 @@ export const load: PageServerLoad = async (event) => {
 
         // Calculate previous period totals
         (await previousPeriodStatistics).forEach((statement) => {
-            previousMoneyIn += Number(statement.innPaaKonto?.replace(",", ".")) || 0;
-            previousMoneyOut += Number(statement.utFraKonto?.replace(",", ".").replace("-", "")) || 0;
+            const amount = statement.belop ?? 0;
+            if (amount > 0) {
+                previousMoneyIn += amount;
+            } else {
+                previousMoneyOut += Math.abs(amount);
+            }
         });
 
         (await accountStatementsStatistics).map((statement) => {
-            moneyIn += Number(statement.innPaaKonto?.replace(",", "."))
-            moneyOut += Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
+            const amount = statement.belop ?? 0;
+            if (amount > 0) {
+                moneyIn += amount;
+            } else {
+                moneyOut += Math.abs(amount);
+            }
 
             if (statement.hovedkategori) {
                 if (!hovedkategorier.includes(statement.hovedkategori)) {
                     hovedkategorier.push(statement.hovedkategori)
                 }
+                
+                // Calculate moneyIn/moneyOut from belop
+                const calcMoneyIn = amount > 0 ? amount : 0;
+                const calcMoneyOut = amount < 0 ? Math.abs(amount) : 0;
+                
                 if (kategoriData.some(e => e.hovedkategori === statement.hovedkategori)) {
                     const newKategoriData = kategoriData.map((kategori) => {
                         if (kategori.hovedkategori === statement.hovedkategori) {
@@ -247,22 +252,22 @@ export const load: PageServerLoad = async (event) => {
                                 kategori.underkategorier.push({
                                     underkategori: statement.underkategori,
                                     statements: [statement],
-                                    moneyIn: Number(statement.innPaaKonto?.replace(",", ".")),
-                                    moneyOut: Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
+                                    moneyIn: calcMoneyIn,
+                                    moneyOut: calcMoneyOut
                                 })
                             } else {
                                 kategori.underkategorier = kategori.underkategorier.map((underkategori) => {
                                     if (underkategori.underkategori === statement.underkategori) {
-                                        underkategori.moneyIn += Number(statement.innPaaKonto?.replace(",", "."))
-                                        underkategori.moneyOut += Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
+                                        underkategori.moneyIn += calcMoneyIn
+                                        underkategori.moneyOut += calcMoneyOut
                                         underkategori.statements.push(statement)
                                     }
                                     return underkategori;
                                 })
                             }
                             kategori.statements.push(statement)
-                            kategori.moneyIn += Number(statement.innPaaKonto?.replace(",", "."))
-                            kategori.moneyOut += Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
+                            kategori.moneyIn += calcMoneyIn
+                            kategori.moneyOut += calcMoneyOut
                         }
                         return kategori;
                     })
@@ -275,13 +280,13 @@ export const load: PageServerLoad = async (event) => {
                                 {
                                     underkategori: statement.underkategori,
                                     statements: [statement],
-                                    moneyIn: Number(statement.innPaaKonto?.replace(",", ".")),
-                                    moneyOut: Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
+                                    moneyIn: calcMoneyIn,
+                                    moneyOut: calcMoneyOut
                                 }
                             ],
                             statements: [statement],
-                            moneyIn: Number(statement.innPaaKonto?.replace(",", ".")),
-                            moneyOut: Number(statement.utFraKonto?.replace(",", ".").replace("-", ""))
+                            moneyIn: calcMoneyIn,
+                            moneyOut: calcMoneyOut
                         }
                     );
                 }
@@ -344,13 +349,15 @@ export const actions: Actions = {
                 
                 if (!line.Dato) return fail(400, { message: "Atleast one line in the file is missing a date" });
                 
+                // Convert Beløp string to number (European format uses comma as decimal separator)
+                const belopNumber = line['Beløp'] ? parseFloat(line['Beløp'].replace(',', '.')) : null;
+                
                 const accountStatement = await db.select({
                     dato: table.accountStatements.dato
                 }).from(table.accountStatements).where(sql`
                     ${table.accountStatements.userId}             = ${event.locals.user.id}
                     and ${table.accountStatements.dato}           = ${new Date(line.Dato).toISOString()} 
-                    and ${table.accountStatements.innPaaKonto}    IS NOT DISTINCT FROM ${line['Inn på konto'] || null}
-                    and ${table.accountStatements.utFraKonto}     IS NOT DISTINCT FROM ${line['Ut fra konto'] || null}
+                    and ${table.accountStatements.belop}          IS NOT DISTINCT FROM ${belopNumber}
                     and ${table.accountStatements.tilKonto}       IS NOT DISTINCT FROM ${line['Til konto'] || null}
                     and ${table.accountStatements.tilKontonummer} IS NOT DISTINCT FROM ${line['Til kontonummer'] || null}
                     and ${table.accountStatements.fraKonto}       IS NOT DISTINCT FROM ${line['Fra konto'] || null}
@@ -367,8 +374,7 @@ export const actions: Actions = {
                 await db.insert(table.accountStatements).values({
                     userId: event.locals.user.id,
                     dato: new Date(line.Dato),
-                    innPaaKonto: line['Inn på konto'],
-                    utFraKonto: line['Ut fra konto'],
+                    belop: belopNumber,
                     tilKonto: line['Til konto'],
                     tilKontonummer: line['Til kontonummer'],
                     fraKonto: line['Fra konto'],
@@ -403,15 +409,24 @@ export const actions: Actions = {
                         parseInt(dateParts[0]) // day
                     );
 
+                    // Convert DNB format to belop: Inn på konto is positive, Ut fra konto is negative
+                    let belopNumber: number | null = null;
+                    if (line['Inn på konto']) {
+                        belopNumber = parseFloat(line['Inn på konto'].replace(',', '.').replace(/\s/g, ''));
+                    } else if (line['Ut fra konto']) {
+                        // Ut fra konto values are already negative or should be made negative
+                        const parsed = parseFloat(line['Ut fra konto'].replace(',', '.').replace(/\s/g, ''));
+                        belopNumber = parsed > 0 ? -parsed : parsed;
+                    }
+
                     // Check for duplicate entries
                     const accountStatement = await db.select({
                         dato: table.accountStatements.dato
                     }).from(table.accountStatements).where(sql`
                         ${table.accountStatements.userId}         = ${event.locals.user.id}
                         and ${table.accountStatements.dato}       = ${parsedDate.toISOString()}
-                        and ${table.accountStatements.innPaaKonto} IS NOT DISTINCT FROM ${line['Inn på konto'] || null}
-                        and ${table.accountStatements.utFraKonto}  IS NOT DISTINCT FROM ${line['Ut fra konto'] || null}
-                        and ${table.accountStatements.tekst}       IS NOT DISTINCT FROM ${line.Forklaring?.trim() || null}
+                        and ${table.accountStatements.belop}      IS NOT DISTINCT FROM ${belopNumber}
+                        and ${table.accountStatements.tekst}      IS NOT DISTINCT FROM ${line.Forklaring?.trim() || null}
                     `).limit(1);
 
                     if (accountStatement.length !== 0) return;
@@ -419,8 +434,7 @@ export const actions: Actions = {
                     await db.insert(table.accountStatements).values({
                         userId: event.locals.user.id,
                         dato: parsedDate,
-                        innPaaKonto: line['Inn på konto'] || null,
-                        utFraKonto: line['Ut fra konto'] || null,
+                        belop: belopNumber,
                         tilKonto: null,
                         tilKontonummer: null,
                         fraKonto: null,

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, text, serial, timestamp, real } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('user', {
 	id: text('id').primaryKey(),
@@ -12,8 +12,7 @@ export const accountStatements = pgTable('accountStatements', {
 		.notNull()
 		.references(() => user.id),
 	dato: timestamp('dato').notNull(),
-	innPaaKonto: text(),
-	utFraKonto: text(),
+	belop: real(),
 	tilKonto: text(),
 	tilKontonummer: text(),
 	fraKonto: text(),
