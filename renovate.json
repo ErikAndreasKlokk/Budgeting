@@ -1,0 +1,45 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard", ":timezone(Europe/Oslo)"],
+  "schedule": ["before 7am on monday"],
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "schedule": ["at any time"],
+    "labels": ["security"]
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 7am on the first day of the month"]
+  },
+  "packageRules": [
+    {
+      "description": "One weekly PR for all non-major npm updates.",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "npm non-major"
+    },
+    {
+      "description": "Dev tooling and CI action bumps can merge themselves once CI passes.",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions",
+      "pinDigests": true,
+      "automerge": true
+    },
+    {
+      "description": "Node base image: Renovate's node versioning only offers LTS lines; major (e.g. 20 -> 24) waits for review.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["node"],
+      "groupName": "node base image"
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["major"]
+    }
+  ]
+}
